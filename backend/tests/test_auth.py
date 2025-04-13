@@ -25,25 +25,23 @@ class MockDynamoDBService:
         self.last_email = email
         return True
 
+
+
 @pytest.fixture
 def client():
-    # Create a mock DynamoDB service
-    mock_dynamodb = MockDynamoDBService()
-    
     # Patch the DynamoDB service
-    with patch('app.services.dynamodb.DynamoDBService', return_value=mock_dynamodb):
-        app = create_app(testing=True)
-        app.config['TESTING'] = True
-        app.config['JSON_AS_ASCII'] = False
-        app.config['JSONIFY_MIMETYPE'] = 'application/json'
-        
-        # Set mock values for testing
-        Config.GOOGLE_CLIENT_ID = 'mock-client-id'
-        Config.JWT_SECRET_KEY = 'mock-jwt-secret'
-        
-        with app.test_client() as client:
-            client.mock_dynamodb = mock_dynamodb  # Attach the mock to the client
-            yield client
+    mock_dynamodb = MockDynamoDBService()
+    app = create_app(mock_dynamodb)
+    app.config['TESTING'] = True
+    app.config['JSON_AS_ASCII'] = False
+    app.config['JSONIFY_MIMETYPE'] = 'application/json'
+    
+    # Set mock values for testing
+    Config.GOOGLE_CLIENT_ID = 'mock-client-id'
+    Config.JWT_SECRET_KEY = 'mock-jwt-secret'
+    with app.test_client() as client:
+        client.mock_dynamodb = mock_dynamodb  # Attach the mock to the client
+        yield client
 
 def test_login_endpoint(client):
     response = client.get('/auth/login')
@@ -83,3 +81,6 @@ def test_callback_endpoint_success(mock_verify, client):
     assert 'user' in data
     assert data['user']['id'] == 'mock-user-id'
     assert data['user']['email'] == 'mock@example.com'
+
+    assert client.mock_dynamodb.get_user_called
+    assert client.mock_dynamodb.create_user_called
