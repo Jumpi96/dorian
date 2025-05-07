@@ -1,54 +1,87 @@
-# React + TypeScript + Vite
+# Frontend Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is a modern web application built with Next.js 15, React 19, and TypeScript. The project uses a comprehensive set of UI components from Radix UI and is styled with Tailwind CSS.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Framework**: Next.js 15.2.4
+- **Language**: TypeScript
+- **UI Library**: React 19
+- **Styling**: Tailwind CSS
+- **Package Manager**: pnpm
+- **Component Library**: Radix UI
+- **Form Handling**: React Hook Form with Zod validation
+- **Charts**: Recharts
+- **Date Handling**: date-fns
+- **Icons**: Lucide React
+- **Animations**: tailwindcss-animate
 
-## Expanding the ESLint configuration
+## Prerequisites
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Node.js (Latest LTS version recommended)
+- pnpm (Package manager)
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Getting Started
+
+1. Install dependencies:
+   ```bash
+   pnpm install
+   ```
+
+2. Run the development server:
+   ```bash
+   pnpm dev
+   ```
+
+3. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+
+## Available Scripts
+
+- `pnpm dev` - Start the development server
+- `pnpm build` - Build the application for production
+- `pnpm start` - Start the production server
+- `pnpm lint` - Run ESLint to check code quality
+
+## Project Structure
+
+```
+frontend/
+├── app/              # Next.js app directory (pages and layouts)
+├── components/       # Reusable React components
+├── hooks/           # Custom React hooks
+├── lib/             # Utility functions and configurations
+├── public/          # Static assets
+└── styles/          # Global styles and Tailwind configurations
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Key Features
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- Modern React with Server Components
+- Type-safe development with TypeScript
+- Responsive design with Tailwind CSS
+- Accessible UI components from Radix UI
+- Form validation with Zod
+- Dark mode support with next-themes
+- Interactive charts with Recharts
+- Toast notifications with Sonner
+- Carousel components with Embla Carousel
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+## Development
+
+The project uses several modern development tools and practices:
+
+- TypeScript for type safety
+- ESLint for code linting
+- Tailwind CSS for styling
+- PostCSS for CSS processing
+- Next.js for server-side rendering and routing
+
+## Contributing
+
+1. Create a new branch for your feature
+2. Make your changes
+3. Submit a pull request
+
+## License
+
+This project is private and proprietary. 
