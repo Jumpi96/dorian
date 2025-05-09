@@ -32,8 +32,8 @@ export default function Home() {
       </header>
 
       <main className="flex-1">
-        <section className="py-20 px-4">
-          <div className="container max-w-4xl mx-auto text-center">
+        <section className="py-20">
+          <div className="container text-center">
             <h2 className="text-4xl font-bold mb-6">Your Personal Wardrobe Assistant</h2>
             <p className="text-xl mb-10 text-gray-600">
               Manage your clothing collection and get personalized outfit recommendations for any occasion.
