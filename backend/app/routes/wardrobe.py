@@ -1,14 +1,12 @@
 from flask import jsonify, request
 import uuid
-from app.routes.auth import get_user_from_token
+from app.routes.auth import requires_auth
 
 def init_wardrobe_routes(app, dynamodb):
     @app.route('/wardrobe/add', methods=['POST'])
+    @requires_auth
     def add_wardrobe_item():
-        user = get_user_from_token()
-        if not user:
-            return jsonify({'error': 'Unauthorized'}), 401
-
+        user = request.user
         data = request.get_json()
         if not data or 'description' not in data:
             return jsonify({'error': 'Missing description'}), 400
@@ -28,11 +26,9 @@ def init_wardrobe_routes(app, dynamodb):
             return jsonify({'error': str(e)}), 500
 
     @app.route('/wardrobe', methods=['GET'])
+    @requires_auth
     def get_wardrobe_items():
-        user = get_user_from_token()
-        if not user:
-            return jsonify({'error': 'Unauthorized'}), 401
-
+        user = request.user
         try:
             items = dynamodb.get_wardrobe_items(user['sub'])
             return jsonify({'items': items}), 200

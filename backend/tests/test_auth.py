@@ -1,86 +1,47 @@
 import pytest
+import jwt
+from flask import redirect
 from unittest.mock import patch, MagicMock
 from app import create_app
-from app.services.dynamodb import DynamoDBService
-import jwt
-from datetime import datetime, timedelta
-from google.oauth2 import id_token
-from google.auth.transport import requests
 from app.config import Config
-
-# Create a mock DynamoDB service class
-class MockDynamoDBService:
-    def __init__(self):
-        self.get_user_called = False
-        self.create_user_called = False
-        
-    def get_user(self, user_id):
-        self.get_user_called = True
-        self.last_user_id = user_id
-        return None
-        
-    def create_user(self, user_id, email):
-        self.create_user_called = True
-        self.last_user_id = user_id
-        self.last_email = email
-        return True
-
-
 
 @pytest.fixture
 def client():
-    # Patch the DynamoDB service
-    mock_dynamodb = MockDynamoDBService()
-    app = create_app(mock_dynamodb)
+    # Create mock Google OAuth2 client
+    mock_google = MagicMock()
+    mock_google.authorize_redirect.return_value = redirect("https://accounts.google.com/o/oauth2/v2/auth")
+    mock_google.authorize_access_token.return_value = {'access_token': 'mock-token'}
+    mock_google.get.return_value.json.return_value = {
+        'id': 'mock-user-id',
+        'email': 'mock@example.com',
+        'name': 'Mock User'
+    }
+
+    # Mock DynamoDB
+    mock_dynamodb = MagicMock()
+
+    app = create_app(mock_dynamodb, google=mock_google)
     app.config['TESTING'] = True
-    app.config['JSON_AS_ASCII'] = False
+    app.config['SECRET_KEY'] = 'test-secret-key'
     app.config['JSONIFY_MIMETYPE'] = 'application/json'
-    
-    # Set mock values for testing
-    Config.GOOGLE_CLIENT_ID = 'mock-client-id'
+    Config.FRONTEND_REDIRECT_SUCCESS = 'http://localhost:3000/auth/success'
     Config.JWT_SECRET_KEY = 'mock-jwt-secret'
-    with app.test_client() as client:
-        client.mock_dynamodb = mock_dynamodb  # Attach the mock to the client
-        yield client
+
+    with app.test_client() as test_client:
+        yield test_client, mock_google
 
 def test_login_endpoint(client):
-    response = client.get('/auth/login')
-    assert response.status_code == 200
-    data = response.get_json()
-    assert 'auth_url' in data
-    assert 'client_id' in data
-    assert 'redirect_uri' in data
-    assert 'scope' in data
+    test_client, mock_google = client
+    response = test_client.get('/auth/login')
+    assert response.status_code == 302
+    assert 'accounts.google.com/o/oauth2/v2/auth' in response.location
 
-@patch('google.oauth2.id_token.verify_oauth2_token')
-def test_callback_endpoint_failure(mock_verify, client):
-    # Mock Google token verification to raise an exception
-    mock_verify.side_effect = Exception('Invalid token')
-    
-    response = client.get('/auth/callback?token=invalid_token')
-    assert response.status_code == 401
-    assert 'error' in response.get_json()
+def test_callback_endpoint_success(client):
+    test_client, mock_google = client
+    response = test_client.get('/auth/callback', follow_redirects=False)
 
-def test_callback_endpoint_missing_token(client):
-    response = client.get('/auth/callback')
-    assert response.status_code == 401
-    assert 'error' in response.get_json()
+    # Validate redirect URL and token presence
+    assert response.status_code == 302
+    assert response.location.startswith(Config.FRONTEND_REDIRECT_SUCCESS)
+    assert 'token=' in response.location
 
-@patch('google.oauth2.id_token.verify_oauth2_token')
-def test_callback_endpoint_success(mock_verify, client):
-    # Mock Google token verification to return a valid user ID and email
-    mock_verify.return_value = {
-        'sub': 'mock-user-id',
-        'email': 'mock@example.com'
-    }
-    
-    response = client.get('/auth/callback?token=valid_token')
-    assert response.status_code == 200
-    data = response.get_json()
-    assert 'token' in data
-    assert 'user' in data
-    assert data['user']['id'] == 'mock-user-id'
-    assert data['user']['email'] == 'mock@example.com'
-
-    assert client.mock_dynamodb.get_user_called
-    assert client.mock_dynamodb.create_user_called

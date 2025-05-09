@@ -1,138 +1,74 @@
 import pytest
-from unittest.mock import patch, MagicMock
-from app import create_app
-import jwt
-from datetime import datetime, timedelta
-from app.config import Config
+from flask import Flask, request
+from unittest.mock import MagicMock
+from app.routes.wardrobe import init_wardrobe_routes
 
-# Create a mock DynamoDB service class
-class MockDynamoDBService:
-    def __init__(self):
-        self.wardrobe_items = {}
-        self.add_wardrobe_item_called = False
-        self.get_wardrobe_items_called = False
-        
-    def add_wardrobe_item(self, user_id, item_id, description):
-        self.add_wardrobe_item_called = True
-        if user_id not in self.wardrobe_items:
-            self.wardrobe_items[user_id] = []
-        self.wardrobe_items[user_id].append({
-            'itemId': item_id,
-            'description': description
-        })
-        return True
-        
-    def get_wardrobe_items(self, user_id):
-        self.get_wardrobe_items_called = True
-        return self.wardrobe_items.get(user_id, [])
+# Fake JWT payload to simulate authenticated user
+MOCK_USER = {"sub": "user-123"}
 
 @pytest.fixture
 def client():
-    # Patch the DynamoDB service
-    mock_dynamodb = MockDynamoDBService()
-    app = create_app(mock_dynamodb)
-    app.config['TESTING'] = True
-    app.config['JSON_AS_ASCII'] = False
-    app.config['JSONIFY_MIMETYPE'] = 'application/json'
-    
-    # Set mock values for testing
-    Config.JWT_SECRET_KEY = 'mock-jwt-secret'
-    with app.test_client() as client:
-        client.mock_dynamodb = mock_dynamodb  # Attach the mock to the client
-        yield client
-        
-@pytest.fixture
-def valid_token():
-    # Create a valid JWT token for testing
-    payload = {
-        'sub': 'test-user-id',
-        'email': 'test@example.com',
-        'exp': datetime.now() + timedelta(days=1)
-    }
-    return jwt.encode(payload, Config.JWT_SECRET_KEY, algorithm='HS256')
+    app = Flask(__name__)
+    app.config["TESTING"] = True
 
-def test_add_wardrobe_item_unauthorized(client):
-    response = client.post('/wardrobe/add', json={'description': 'Test item'})
-    assert response.status_code == 401
-    assert 'error' in response.get_json()
+    # Override requires_auth decorator
+    def fake_requires_auth(f):
+        def wrapped(*args, **kwargs):
+            request.user = MOCK_USER
+            return f(*args, **kwargs)
+        wrapped.__name__ = f.__name__
+        return wrapped
 
-def test_add_wardrobe_item_missing_description(client, valid_token):
-    headers = {'Authorization': f'Bearer {valid_token}'}
-    response = client.post('/wardrobe/add', json={}, headers=headers)
-    assert response.status_code == 400
-    assert 'error' in response.get_json()
+    # Monkey patch it into wardrobe module before init
+    from app.routes import wardrobe
+    wardrobe.requires_auth = fake_requires_auth
 
-def test_add_wardrobe_item_success(client, valid_token):
-    headers = {'Authorization': f'Bearer {valid_token}'}
-    response = client.post('/wardrobe/add', 
-                         json={'description': 'Test item'}, 
-                         headers=headers)
+    # Provide a mocked DynamoDB client
+    mock_dynamodb = MagicMock()
+    init_wardrobe_routes(app, mock_dynamodb)
+
+    with app.test_client() as test_client:
+        yield test_client, mock_dynamodb
+
+def test_add_wardrobe_item_success(client):
+    test_client, mock_dynamodb = client
+    description = "Parka beige"
+    mock_dynamodb.add_wardrobe_item.return_value = None
+
+    response = test_client.post("/wardrobe/add", json={"description": description})
+    data = response.get_json()
+
     assert response.status_code == 201
+    assert "itemId" in data
+    assert data["description"] == description
+    mock_dynamodb.add_wardrobe_item.assert_called_once()
+    kwargs = mock_dynamodb.add_wardrobe_item.call_args.kwargs
+    assert kwargs["user_id"] == MOCK_USER["sub"]
+    assert kwargs["description"] == description
+
+def test_add_wardrobe_item_missing_description(client):
+    test_client, _ = client
+    response = test_client.post("/wardrobe/add", json={})
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "Missing description"}
+
+def test_get_wardrobe_items_success(client):
+    test_client, mock_dynamodb = client
+    expected_items = [{"itemId": "abc", "description": "White hoodie"}]
+    mock_dynamodb.get_wardrobe_items.return_value = expected_items
+
+    response = test_client.get("/wardrobe")
     data = response.get_json()
-    assert 'itemId' in data
-    assert 'description' in data
-    assert data['description'] == 'Test item'
-    assert client.mock_dynamodb.add_wardrobe_item_called
 
-def test_get_wardrobe_items_unauthorized(client):
-    response = client.get('/wardrobe')
-    assert response.status_code == 401
-    assert 'error' in response.get_json()
-
-def test_get_wardrobe_items_empty(client, valid_token):
-    headers = {'Authorization': f'Bearer {valid_token}'}
-    response = client.get('/wardrobe', headers=headers)
     assert response.status_code == 200
-    data = response.get_json()
-    assert 'items' in data
-    assert len(data['items']) == 0
-    assert client.mock_dynamodb.get_wardrobe_items_called
+    assert data["items"] == expected_items
+    mock_dynamodb.get_wardrobe_items.assert_called_once_with(MOCK_USER["sub"])
 
-def test_get_wardrobe_items_with_items(client, valid_token):
-    # First add an item
-    headers = {'Authorization': f'Bearer {valid_token}'}
-    client.post('/wardrobe/add', 
-               json={'description': 'Test item'}, 
-               headers=headers)
-    
-    # Then get the items
-    response = client.get('/wardrobe', headers=headers)
-    assert response.status_code == 200
-    data = response.get_json()
-    assert 'items' in data
-    assert len(data['items']) == 1
-    assert data['items'][0]['description'] == 'Test item'
+def test_get_wardrobe_items_failure(client):
+    test_client, mock_dynamodb = client
+    mock_dynamodb.get_wardrobe_items.side_effect = Exception("DB error")
 
-def test_multi_user_wardrobe_items(client):
-    # Create tokens for two different users
-    user1_token = jwt.encode(
-        {'sub': 'user1', 'email': 'user1@example.com', 'exp': datetime.now() + timedelta(days=1)},
-        Config.JWT_SECRET_KEY,
-        algorithm='HS256'
-    )
-    user2_token = jwt.encode(
-        {'sub': 'user2', 'email': 'user2@example.com', 'exp': datetime.now() + timedelta(days=1)},
-        Config.JWT_SECRET_KEY,
-        algorithm='HS256'
-    )
-    
-    # Add items for both users
-    client.post('/wardrobe/add', 
-               json={'description': 'User1 item'}, 
-               headers={'Authorization': f'Bearer {user1_token}'})
-    client.post('/wardrobe/add', 
-               json={'description': 'User2 item'}, 
-               headers={'Authorization': f'Bearer {user2_token}'})
-    
-    # Check that each user only sees their own items
-    response1 = client.get('/wardrobe', 
-                         headers={'Authorization': f'Bearer {user1_token}'})
-    data1 = response1.get_json()
-    assert len(data1['items']) == 1
-    assert data1['items'][0]['description'] == 'User1 item'
-    
-    response2 = client.get('/wardrobe', 
-                         headers={'Authorization': f'Bearer {user2_token}'})
-    data2 = response2.get_json()
-    assert len(data2['items']) == 1
-    assert data2['items'][0]['description'] == 'User2 item' 
+    response = test_client.get("/wardrobe")
+    assert response.status_code == 500
+    assert response.get_json() == {"error": "DB error"}

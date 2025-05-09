@@ -7,10 +7,12 @@ class Config:
     # Google OAuth
     GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
     GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
-    GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI')
     
     # JWT
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
+
+    # Frontend
+    FRONTEND_REDIRECT_SUCCESS = f"http://localhost:5173/login-success"
     
     # AWS
     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
