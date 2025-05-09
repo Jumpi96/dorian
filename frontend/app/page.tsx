@@ -1,16 +1,33 @@
+'use client';
+
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowRight, Shirt, LuggageIcon as Suitcase, ShoppingBag } from "lucide-react"
+import { GoogleSignInButton } from "@/components/google-signin-button"
+import { useAuth } from "@/lib/auth"
 
 export default function Home() {
+  const { isAuthenticated, logout } = useAuth();
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="border-b">
         <div className="container flex justify-between items-center py-4">
           <h1 className="text-2xl font-bold">Dorian</h1>
-          <Link href="/dashboard">
-            <Button>Enter Demo</Button>
-          </Link>
+          <div className="flex gap-4">
+            {isAuthenticated ? (
+              <>
+                <Link href="/dashboard">
+                  <Button>Go to Dashboard</Button>
+                </Link>
+                <Button variant="outline" onClick={logout}>
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <GoogleSignInButton />
+            )}
+          </div>
         </div>
       </header>
 
@@ -21,11 +38,15 @@ export default function Home() {
             <p className="text-xl mb-10 text-gray-600">
               Manage your clothing collection and get personalized outfit recommendations for any occasion.
             </p>
-            <Link href="/dashboard">
-              <Button size="lg" className="mb-10">
-                Get Started <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+            {isAuthenticated ? (
+              <Link href="/dashboard">
+                <Button size="lg" className="mb-10">
+                  Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            ) : (
+              <GoogleSignInButton />
+            )}
 
             <div className="grid md:grid-cols-3 gap-8 mt-16">
               <div className="p-6 border rounded-lg">

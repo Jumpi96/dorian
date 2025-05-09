@@ -12,7 +12,7 @@ class Config:
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
 
     # Frontend
-    FRONTEND_REDIRECT_SUCCESS = f"http://localhost:5173/login-success"
+    FRONTEND_REDIRECT_SUCCESS = 'http://localhost:3000/login-success'
     
     # AWS
     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
