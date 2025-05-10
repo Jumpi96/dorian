@@ -1,18 +1,3 @@
-resource "aws_dynamodb_table" "users" {
-  name           = "${var.environment}-users"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "userId"
-  stream_enabled = true
-  stream_view_type = "NEW_AND_OLD_IMAGES"
-
-  attribute {
-    name = "userId"
-    type = "S"
-  }
-
-  tags = var.tags
-}
-
 resource "aws_dynamodb_table" "wardrobe_items" {
   name           = "${var.environment}-wardrobe-items"
   billing_mode   = "PAY_PER_REQUEST"
