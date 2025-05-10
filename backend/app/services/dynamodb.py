@@ -2,6 +2,15 @@ import boto3
 from botocore.exceptions import ClientError
 from app.config import Config
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
+
+WARDROBE_TABLE_NAME = 'dev-wardrobe-items'
+
+class DynamoDBError(Exception):
+    """Base exception for DynamoDB related errors"""
+    pass
 
 class DynamoDBService:
     def __init__(self):
@@ -11,26 +20,45 @@ class DynamoDBService:
             aws_secret_access_key=Config.AWS_SECRET_ACCESS_KEY,
             region_name=Config.AWS_REGION
         )
-        self.users_table = self.dynamodb.Table('dev-users')
+        self.wardrobe_table = self.dynamodb.Table(WARDROBE_TABLE_NAME)
 
-    def get_user(self, user_id):
+    def delete_wardrobe_item(self, user_id, item_id):
         try:
-            response = self.users_table.get_item(Key={'userId': user_id})
-            return response.get('Item')
+            self.wardrobe_table.delete_item(
+                Key={
+                    'userId': user_id,
+                    'itemId': item_id
+                }
+            )
+            return True
         except ClientError as e:
-            print(f"Error getting user: {e}")
-            return None
+            logger.error(f"Error deleting wardrobe item: {str(e)}", exc_info=True)
+            raise DynamoDBError(f"Failed to delete wardrobe item: {str(e)}")
 
-    def create_user(self, user_id, email):
+    def add_wardrobe_item(self, user_id, item_id, description):
         try:
-            self.users_table.put_item(
+            self.wardrobe_table.put_item(
                 Item={
                     'userId': user_id,
-                    'email': email,
+                    'itemId': item_id,
+                    'description': description,
                     'createdAt': str(datetime.utcnow())
                 }
             )
             return True
         except ClientError as e:
-            print(f"Error creating user: {e}")
-            return False 
+            logger.error(f"Error adding wardrobe item: {str(e)}", exc_info=True)
+            raise DynamoDBError(f"Failed to add wardrobe item: {str(e)}")
+
+    def get_wardrobe_items(self, user_id):
+        try:
+            response = self.wardrobe_table.query(
+                KeyConditionExpression='userId = :uid',
+                ExpressionAttributeValues={
+                    ':uid': user_id
+                }
+            )
+            return response.get('Items', [])
+        except ClientError as e:
+            logger.error(f"Error getting wardrobe items: {str(e)}", exc_info=True)
+            raise DynamoDBError(f"Failed to retrieve wardrobe items: {str(e)}")

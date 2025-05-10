@@ -35,7 +35,7 @@ def test_add_wardrobe_item_success(client):
     description = "Parka beige"
     mock_dynamodb.add_wardrobe_item.return_value = None
 
-    response = test_client.post("/wardrobe/add", json={"description": description})
+    response = test_client.post("/wardrobe", json={"description": description})
     data = response.get_json()
 
     assert response.status_code == 201
@@ -48,7 +48,7 @@ def test_add_wardrobe_item_success(client):
 
 def test_add_wardrobe_item_missing_description(client):
     test_client, _ = client
-    response = test_client.post("/wardrobe/add", json={})
+    response = test_client.post("/wardrobe", json={})
 
     assert response.status_code == 400
     assert response.get_json() == {"error": "Missing description"}
@@ -71,4 +71,28 @@ def test_get_wardrobe_items_failure(client):
 
     response = test_client.get("/wardrobe")
     assert response.status_code == 500
-    assert response.get_json() == {"error": "DB error"}
+    assert response.get_json() == {"error": "An error occurred while retrieving items"}
+
+def test_delete_wardrobe_item_success(client):
+    test_client, mock_dynamodb = client
+    item_id = "test-item-123"
+    mock_dynamodb.delete_wardrobe_item.return_value = True
+
+    response = test_client.delete(f"/wardrobe/{item_id}")
+    data = response.get_json()
+
+    assert response.status_code == 200
+    assert data == {"message": "Item deleted successfully"}
+    mock_dynamodb.delete_wardrobe_item.assert_called_once_with(MOCK_USER["sub"], item_id)
+
+def test_delete_wardrobe_item_failure(client):
+    test_client, mock_dynamodb = client
+    item_id = "test-item-123"
+    mock_dynamodb.delete_wardrobe_item.return_value = False
+
+    response = test_client.delete(f"/wardrobe/{item_id}")
+    data = response.get_json()
+
+    assert response.status_code == 500
+    assert data == {"error": "Failed to delete item"}
+    mock_dynamodb.delete_wardrobe_item.assert_called_once_with(MOCK_USER["sub"], item_id)
