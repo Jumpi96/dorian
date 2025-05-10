@@ -14,6 +14,14 @@ dorian/
 
 ## Frontend Setup
 
+The frontend is a modern web application built with Next.js 15, React 19, and TypeScript. It uses Radix UI components and is styled with Tailwind CSS.
+
+### Prerequisites
+- Node.js (Latest LTS version recommended)
+- pnpm (Package manager)
+
+### Getting Started
+
 1. Navigate to the frontend directory:
    ```bash
    cd frontend
@@ -21,13 +29,21 @@ dorian/
 
 2. Install dependencies:
    ```bash
-   npm install
+   pnpm install
    ```
 
-3. Run tests:
+3. Run the development server:
    ```bash
-   npm test
+   pnpm dev
    ```
+
+4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+
+### Available Scripts
+- `pnpm dev` - Start the development server
+- `pnpm build` - Build the application for production
+- `pnpm start` - Start the production server
+- `pnpm lint` - Run ESLint to check code quality
 
 ## Backend Setup
 
