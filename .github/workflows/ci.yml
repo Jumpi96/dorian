@@ -22,6 +22,9 @@ jobs:
         node-version: '20.x'
         cache: 'pnpm'
         cache-dependency-path: './frontend/pnpm-lock.yaml'
+
+    - name: Install pnpm
+      run: npm install -g pnpm
     
     - name: Install dependencies
       run: pnpm install
@@ -52,6 +55,8 @@ jobs:
     
     - name: Run tests
       run: pytest
+      env:
+        JWT_SECRET_KEY: test-secret
 
   terraform:
     runs-on: ubuntu-latest
