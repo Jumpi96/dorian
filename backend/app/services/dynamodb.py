@@ -1,7 +1,7 @@
 import boto3
 from botocore.exceptions import ClientError
 from app.config import Config
-from datetime import datetime
+from datetime import datetime, UTC
 import logging
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ class DynamoDBService:
                     'userId': user_id,
                     'itemId': item_id,
                     'description': description,
-                    'createdAt': datetime.now(datetime.UTC).isoformat()
+                    'createdAt': datetime.now(UTC).isoformat()
                 }
             )
             return True
