@@ -1,44 +1,74 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { cookies } from "next/headers"
 
 // In a real app, this would interact with a database
 export async function addWardrobeItem(description: string): Promise<string> {
-  // For demo purposes, we're not checking authentication
-  const userId = "demo-user"
+  const cookieStore = await cookies()
+  const token = cookieStore.get('auth_token')?.value
 
-  // Simulate database interaction
-  await new Promise((resolve) => setTimeout(resolve, 500))
+  if (!token) {
+    throw new Error('Not authenticated')
+  }
 
-  // Generate a random ID for the new item
-  const id = Math.random().toString(36).substring(2, 9)
+  const response = await fetch('http://localhost:3001/wardrobe', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ description })
+  })
 
-  revalidatePath("/dashboard")
-  return id
+  if (!response.ok) {
+    throw new Error('Failed to add wardrobe item')
+  }
+
+  const data = await response.json()
+  revalidatePath('/dashboard')
+  return data.itemId
 }
 
 export async function deleteWardrobeItem(itemId: string): Promise<void> {
-  // For demo purposes, we're not checking authentication
-  const userId = "demo-user"
+  const cookieStore = await cookies()
+  const token = cookieStore.get('auth_token')?.value
 
-  // Simulate database interaction
-  await new Promise((resolve) => setTimeout(resolve, 500))
+  if (!token) {
+    throw new Error('Not authenticated')
+  }
 
-  revalidatePath("/dashboard")
+  const response = await fetch(`http://localhost:3001/wardrobe/${itemId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to delete wardrobe item')
+  }
+
+  revalidatePath('/dashboard')
 }
 
 export async function getWardrobeItems() {
-  // For demo purposes, we're not checking authentication
-  const userId = "demo-user"
+  const cookieStore = await cookies()
+  const token = cookieStore.get('auth_token')?.value
 
-  // Simulate database interaction
-  await new Promise((resolve) => setTimeout(resolve, 500))
+  if (!token) {
+    throw new Error('Not authenticated')
+  }
 
-  // Return mock data
-  return [
-    { id: "1", description: "Black t-shirt" },
-    { id: "2", description: "Blue jeans" },
-    { id: "3", description: "White sneakers" },
-    { id: "4", description: "Gray hoodie" },
-  ]
+  const response = await fetch('http://localhost:3001/wardrobe', {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch wardrobe items')
+  }
+
+  return response.json()
 }

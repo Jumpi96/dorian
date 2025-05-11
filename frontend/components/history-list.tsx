@@ -67,7 +67,7 @@ export function HistoryList() {
   return (
     <div className="space-y-6">
       {history.map((item) => (
-        <Card key={item.id}>
+        <Card key={item.itemId}>
           <CardHeader className="pb-2">
             <div className="flex justify-between items-start">
               <div>

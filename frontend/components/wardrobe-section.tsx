@@ -1,40 +1,70 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
-import { addWardrobeItem, deleteWardrobeItem } from "@/lib/wardrobe-actions"
+import { addWardrobeItem, deleteWardrobeItem, getWardrobeItems } from "@/lib/wardrobe-actions"
+import { useAuth } from "@/lib/auth"
+
+interface WardrobeItem {
+  itemId: string
+  description: string
+}
 
 export function WardrobeSection() {
   const [newItem, setNewItem] = useState("")
-  const [items, setItems] = useState<{ id: string; description: string }[]>([
-    { id: "1", description: "Black t-shirt" },
-    { id: "2", description: "Blue jeans" },
-    { id: "3", description: "White sneakers" },
-    { id: "4", description: "Gray hoodie" },
-  ])
+  const [items, setItems] = useState<WardrobeItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
+  const { isAuthenticated, login } = useAuth()
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadWardrobeItems()
+    }
+  }, [isAuthenticated])
+
+  const loadWardrobeItems = async () => {
+    try {
+      const response = await getWardrobeItems()
+      // Ensure we have an array of items
+      const wardrobeItems = Array.isArray(response) ? response : response.items || []
+      setItems(wardrobeItems)
+    } catch (error) {
+      console.error('Error loading wardrobe items:', error)
+      setItems([])
+      toast({
+        title: "Error",
+        description: "Failed to load wardrobe items.",
+        variant: "destructive",
+      })
+    }
+  }
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newItem.trim()) return
 
+    if (!isAuthenticated) {
+      login()
+      return
+    }
+
     setIsLoading(true)
     try {
-      const id = await addWardrobeItem(newItem)
-      setItems([...items, { id, description: newItem }])
+      const itemId = await addWardrobeItem(newItem)
+      setItems(prevItems => [...prevItems, { itemId, description: newItem }])
       setNewItem("")
       toast({
         title: "Item added",
         description: `${newItem} has been added to your wardrobe.`,
       })
     } catch (error) {
+      console.error('Error adding item:', error)
       toast({
         title: "Error",
         description: "Failed to add item to your wardrobe.",
@@ -46,14 +76,20 @@ export function WardrobeSection() {
   }
 
   const handleDeleteItem = async (id: string) => {
+    if (!isAuthenticated) {
+      login()
+      return
+    }
+
     try {
       await deleteWardrobeItem(id)
-      setItems(items.filter((item) => item.id !== id))
+      setItems(prevItems => prevItems.filter((item) => item.itemId !== id))
       toast({
         title: "Item removed",
         description: "Item has been removed from your wardrobe.",
       })
     } catch (error) {
+      console.error('Error deleting item:', error)
       toast({
         title: "Error",
         description: "Failed to remove item from your wardrobe.",
@@ -62,6 +98,25 @@ export function WardrobeSection() {
     }
   }
 
+  if (!isAuthenticated) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>My Wardrobe</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-500 text-center py-4">
+            Please log in to manage your wardrobe.
+          </p>
+          <Button onClick={login} className="w-full">
+            Log in
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  console.log(items);
   return (
     <Card>
       <CardHeader>
@@ -79,14 +134,14 @@ export function WardrobeSection() {
           </Button>
         </form>
 
-        {items.length === 0 ? (
+        {!Array.isArray(items) || items.length === 0 ? (
           <p className="text-gray-500 text-center py-4">Your wardrobe is empty. Add some items to get started.</p>
         ) : (
           <ul className="space-y-2">
             {items.map((item) => (
-              <li key={item.id} className="flex justify-between items-center p-2 border rounded-md">
+              <li key={item.itemId} className="flex justify-between items-center p-2 border rounded-md">
                 <span>{item.description}</span>
-                <Button variant="ghost" size="icon" onClick={() => handleDeleteItem(item.id)}>
+                <Button variant="ghost" size="icon" onClick={() => handleDeleteItem(item.itemId)}>
                   <Trash2 className="h-4 w-4 text-gray-500" />
                 </Button>
               </li>
