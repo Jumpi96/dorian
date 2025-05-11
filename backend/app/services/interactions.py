@@ -1,0 +1,45 @@
+import logging
+from datetime import datetime, UTC
+from app.clients.dynamodb import DynamoDBClient, DynamoDBError
+
+logger = logging.getLogger(__name__)
+
+INTERACTIONS_TABLE = 'dev-interactions'
+
+class InteractionsService:
+    def __init__(self, dynamodb_client: DynamoDBClient):
+        self.dynamodb = dynamodb_client
+        self.table_name = INTERACTIONS_TABLE
+
+    def save_recommendation_interaction(self, user_id: str, situation: str, recommendation: dict) -> str:
+        """
+        Save an outfit recommendation interaction to DynamoDB.
+        
+        Args:
+            user_id (str): The user's ID
+            situation (str): The situation the user described
+            recommendation (dict): The outfit recommendation
+            
+        Returns:
+            str: The interaction ID
+            
+        Raises:
+            DynamoDBError: If there's an error saving to DynamoDB
+        """
+        try:
+            interaction_id = f"rec_{datetime.now(UTC).isoformat()}"
+            self.dynamodb.put_item(
+                table_name=self.table_name,
+                item={
+                    "interactionId": interaction_id,
+                    "userId": user_id,
+                    "type": "outfit_recommendation",
+                    "situation": situation,
+                    "recommendation": recommendation,
+                    "createdAt": datetime.now(UTC).isoformat()
+                }
+            )
+            return interaction_id
+        except DynamoDBError as e:
+            logger.error(f"Error saving recommendation interaction: {str(e)}", exc_info=True)
+            raise 

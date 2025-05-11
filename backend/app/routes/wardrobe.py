@@ -2,10 +2,11 @@ from flask import jsonify, request, current_app
 import uuid
 import logging
 from app.routes.auth import requires_auth
+from app.services.wardrobe import WardrobeService
 
 logger = logging.getLogger(__name__)
 
-def init_wardrobe_routes(app, dynamodb):
+def init_wardrobe_routes(app, wardrobe_service: WardrobeService):
     @app.route('/wardrobe', methods=['POST'])
     @requires_auth
     def add_wardrobe_item():
@@ -16,7 +17,7 @@ def init_wardrobe_routes(app, dynamodb):
 
         item_id = str(uuid.uuid4())
         try:
-            dynamodb.add_wardrobe_item(
+            wardrobe_service.add_wardrobe_item(
                 user_id=user['sub'],
                 item_id=item_id,
                 description=data['description']
@@ -36,7 +37,7 @@ def init_wardrobe_routes(app, dynamodb):
     def get_wardrobe_items():
         user = request.user
         try:
-            items = dynamodb.get_wardrobe_items(user['sub'])
+            items = wardrobe_service.get_wardrobe_items(user['sub'])
             return jsonify({'items': items}), 200
         except Exception as e:
             logger.error(f"Error getting wardrobe items: {str(e)}", exc_info=True)
@@ -49,7 +50,7 @@ def init_wardrobe_routes(app, dynamodb):
     def delete_wardrobe_item(item_id):
         user = request.user
         try:
-            success = dynamodb.delete_wardrobe_item(user['sub'], item_id)
+            success = wardrobe_service.delete_wardrobe_item(user['sub'], item_id)
             if success:
                 return jsonify({'message': 'Item deleted successfully'}), 200
             return jsonify({'error': 'Failed to delete item'}), 500

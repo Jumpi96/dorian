@@ -1,9 +1,15 @@
 from flask import Flask
 from authlib.integrations.flask_client import OAuth
 from app.config import Config
-from app.services.dynamodb import DynamoDBService
+from app.clients.dynamodb import DynamoDBClient
+from app.services.llm import LLMService
+from app.services.rate_limit import RateLimitService
+from app.services.wardrobe import WardrobeService
+from app.services.recommendations import RecommendationsService
+from app.services.interactions import InteractionsService
 from app.routes.auth import init_auth_routes
 from app.routes.wardrobe import init_wardrobe_routes
+from app.routes.recommendations import init_recommendation_routes
 
 oauth = OAuth()
 
@@ -18,14 +24,22 @@ def register_google_oauth(app):
         client_kwargs={'scope': 'openid email profile'}
     )
 
-def create_app(dynamoDBService=DynamoDBService(), google=None):
+def create_app(dynamoDBClient=DynamoDBClient(), google=None):
     app = Flask(__name__)
     app.secret_key = Config.JWT_SECRET_KEY
     if google is None:
         google = register_google_oauth(app)
 
+    # Initialize services
+    rate_limit_service = RateLimitService(dynamoDBClient)
+    llm_service = LLMService(rate_limit_service)
+    wardrobe_service = WardrobeService(dynamoDBClient)
+    recommendations_service = RecommendationsService(llm_service, wardrobe_service)
+    interactions_service = InteractionsService(dynamoDBClient)
+
     # Initialize routes
     init_auth_routes(app, google)
-    init_wardrobe_routes(app, dynamoDBService)
+    init_wardrobe_routes(app, wardrobe_service)
+    init_recommendation_routes(app, recommendations_service, interactions_service)
     
     return app
