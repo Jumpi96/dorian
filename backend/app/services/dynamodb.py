@@ -42,7 +42,7 @@ class DynamoDBService:
                     'userId': user_id,
                     'itemId': item_id,
                     'description': description,
-                    'createdAt': str(datetime.utcnow())
+                    'createdAt': datetime.now(datetime.UTC).isoformat()
                 }
             )
             return True
