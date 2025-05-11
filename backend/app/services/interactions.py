@@ -27,7 +27,8 @@ class InteractionsService:
             DynamoDBError: If there's an error saving to DynamoDB
         """
         try:
-            interaction_id = f"rec_{datetime.now(UTC).isoformat()}"
+            timestamp = datetime.now(UTC).isoformat()
+            interaction_id = f"rec_{timestamp}"
             self.dynamodb.put_item(
                 table_name=self.table_name,
                 item={
@@ -36,10 +37,45 @@ class InteractionsService:
                     "type": "outfit_recommendation",
                     "situation": situation,
                     "recommendation": recommendation,
-                    "createdAt": datetime.now(UTC).isoformat()
+                    "createdAt": timestamp
+                }
+            )
+            
+            return interaction_id
+        except DynamoDBError as e:
+            logger.error(f"Error saving recommendation interaction: {str(e)}", exc_info=True)
+            raise
+
+    def save_purchase_recommendation_interaction(self, user_id: str, situation: str, recommendation: dict) -> str:
+        """
+        Save a purchase recommendation interaction to DynamoDB.
+        
+        Args:
+            user_id (str): The user's ID
+            situation (str): The situation the user described
+            recommendation (dict): The item to buy recommendation
+            
+        Returns:
+            str: The interaction ID
+            
+        Raises:
+            DynamoDBError: If there's an error saving to DynamoDB
+        """
+        try:
+            timestamp = datetime.now(UTC).isoformat()
+            interaction_id = f"buy_{timestamp}"
+            self.dynamodb.put_item(
+                table_name=self.table_name,
+                item={
+                    "interactionId": interaction_id,
+                    "userId": user_id,
+                    "type": "purchase_recommendation",
+                    "situation": situation,
+                    "recommendation": recommendation,
+                    "createdAt": timestamp
                 }
             )
             return interaction_id
         except DynamoDBError as e:
-            logger.error(f"Error saving recommendation interaction: {str(e)}", exc_info=True)
+            logger.error(f"Error saving purchase recommendation interaction: {str(e)}", exc_info=True)
             raise 

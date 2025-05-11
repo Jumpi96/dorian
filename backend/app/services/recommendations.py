@@ -64,4 +64,56 @@ Recommend an outfit using only items from their wardrobe. Format the response as
             raise
         except Exception as e:
             logger.error(f"Error getting outfit recommendation: {str(e)}", exc_info=True)
+            raise
+
+    def get_items_to_buy_recommendation(self, user_id: str, situation: str) -> dict:
+        """
+        Get a recommendation for a single item to buy based on the user's wardrobe and situation.
+        
+        Args:
+            user_id (str): The user's ID
+            situation (str): The situation the user described
+            
+        Returns:
+            dict: The item to buy recommendation with format:
+                {
+                    "item": "description of the item to buy",
+                    "explanation": "detailed explanation of why this item would be beneficial"
+                }
+        
+        Raises:
+            InsufficientWardrobeError: If user has fewer than MIN_WARDROBE_ITEMS items
+            Exception: If there's an error getting the recommendation
+        """
+        try:
+            # Get user's wardrobe items
+            wardrobe_items = self.wardrobe_service.get_wardrobe_items(user_id)
+            
+            # Check if user has enough items
+            if len(wardrobe_items) < MIN_WARDROBE_ITEMS:
+                raise InsufficientWardrobeError(
+                    f"Need at least {MIN_WARDROBE_ITEMS} items in wardrobe for recommendations. "
+                    f"Current items: {len(wardrobe_items)}"
+                )
+            
+            # Construct the prompt
+            wardrobe_description = "\n".join([item["description"] for item in wardrobe_items])
+            prompt = f"""Given the following wardrobe items:
+{wardrobe_description}
+
+The user is in this situation: {situation}
+
+Recommend ONE item they should buy to improve their wardrobe for this situation. Format the response as a JSON object with the following structure:
+{{
+    "item": "detailed description of the item to buy",
+    "explanation": "detailed explanation of why this item would be beneficial for the situation, including how it complements their existing wardrobe"
+}}"""
+
+            # Get recommendation from LLM
+            return self.llm_service.get_completion(prompt, user_id)
+            
+        except InsufficientWardrobeError:
+            raise
+        except Exception as e:
+            logger.error(f"Error getting items to buy recommendation: {str(e)}", exc_info=True)
             raise 

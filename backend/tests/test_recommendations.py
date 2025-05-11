@@ -99,4 +99,66 @@ def test_recommend_outfit_general_error(client):
     response = test_client.post('/recommend/wear', json={"situation": situation})
     
     assert response.status_code == 500
+    assert response.json == {"error": "Test error"}
+
+def test_recommend_items_to_buy_success(client):
+    test_client, mock_recommendations_service, mock_interactions_service = client
+    situation = "casual dinner"
+    recommendation = {
+        "item": "Black leather loafers",
+        "explanation": "These versatile loafers would be perfect for your casual dinner. They can be dressed up or down, and would complement your existing wardrobe by providing a sophisticated footwear option that works well with both jeans and dress pants. The black color makes them easy to pair with any outfit."
+    }
+    interaction_id = "buy_2024-03-21T12:00:00"
+    
+    mock_recommendations_service.get_items_to_buy_recommendation.return_value = recommendation
+    mock_interactions_service.save_purchase_recommendation_interaction.return_value = interaction_id
+    
+    response = test_client.post('/recommend/buy', json={"situation": situation})
+    
+    assert response.status_code == 200
+    assert response.json == {
+        "item_to_buy": recommendation,
+        "interaction_id": interaction_id
+    }
+    
+    mock_recommendations_service.get_items_to_buy_recommendation.assert_called_once_with(
+        MOCK_USER["sub"], situation
+    )
+    mock_interactions_service.save_purchase_recommendation_interaction.assert_called_once_with(
+        user_id=MOCK_USER["sub"], situation=situation, recommendation=recommendation
+    )
+
+def test_recommend_items_to_buy_missing_situation(client):
+    test_client, _, _ = client
+    response = test_client.post('/recommend/buy', json={})
+    
+    assert response.status_code == 400
+    assert response.json == {"error": "Missing situation in request"}
+
+def test_recommend_items_to_buy_insufficient_items(client):
+    test_client, mock_recommendations_service, _ = client
+    situation = "casual dinner"
+    
+    mock_recommendations_service.get_items_to_buy_recommendation.side_effect = InsufficientWardrobeError(
+        "Need at least 3 items in wardrobe for recommendations. Current items: 2"
+    )
+    
+    response = test_client.post('/recommend/buy', json={"situation": situation})
+    
+    assert response.status_code == 400
+    assert response.json == {
+        "error": "Need at least 3 items in wardrobe for recommendations. Current items: 2",
+        "type": "insufficient_wardrobe",
+        "message": "Please add more items to your wardrobe before requesting recommendations."
+    }
+
+def test_recommend_items_to_buy_general_error(client):
+    test_client, mock_recommendations_service, _ = client
+    situation = "casual dinner"
+    
+    mock_recommendations_service.get_items_to_buy_recommendation.side_effect = Exception("Test error")
+    
+    response = test_client.post('/recommend/buy', json={"situation": situation})
+    
+    assert response.status_code == 500
     assert response.json == {"error": "Test error"} 
