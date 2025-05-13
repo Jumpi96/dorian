@@ -98,5 +98,6 @@ def test_query_success(dynamodb_client, mock_boto3):
     assert result == {'Items': [{'id': '1', 'data': 'test'}]}
     mock_table.query.assert_called_once_with(
         KeyConditionExpression='userId = :uid',
-        ExpressionAttributeValues={':uid': 'user1'}
+        ExpressionAttributeValues={':uid': 'user1'},
+        ScanIndexForward=True
     ) 

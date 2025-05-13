@@ -36,7 +36,7 @@ def test_increment_existing_count(mock_datetime, rate_limit_service, mock_dynamo
     # Mock existing record with count < MAX_REQUESTS_PER_DAY
     mock_dynamodb_client.get_item.return_value = {
         'Item': {
-            'id': 'user1:2024-03-20',
+            'date': '2024-03-20',
             'userId': 'user1',
             'count': 5,
             'createdAt': '2024-03-20T00:00:00+00:00'
@@ -52,7 +52,7 @@ def test_increment_existing_count(mock_datetime, rate_limit_service, mock_dynamo
     # Verify the update_item call had the correct structure
     update_args = mock_dynamodb_client.update_item.call_args[1]
     assert update_args['table_name'] == 'dev-rate-limits'
-    assert update_args['key'] == {'id': 'user1:2024-03-20'}
+    assert update_args['key'] == {'date': '2024-03-20', 'userId': 'user1'}
     assert update_args['update_expression'] == 'SET #count = #count + :inc'
     assert update_args['expression_attribute_names'] == {'#count': 'count'}
     assert update_args['expression_attribute_values'] == {':inc': 1}

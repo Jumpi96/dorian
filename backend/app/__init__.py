@@ -11,6 +11,7 @@ from app.services.trips import TripsService
 from app.routes.auth import init_auth_routes
 from app.routes.wardrobe import init_wardrobe_routes
 from app.routes.recommendations import init_recommendation_routes
+from app.routes.trips import init_trip_routes
 from app.services.text_transformations import TextTransformationsService
 
 
@@ -46,5 +47,6 @@ def create_app(dynamoDBClient=DynamoDBClient(), google=None):
     init_auth_routes(app, google)
     init_wardrobe_routes(app, wardrobe_service)
     init_recommendation_routes(app, recommendations_service, interactions_service, trips_service, text_transformations_service)
-    
+    init_trip_routes(app, trips_service)
+
     return app

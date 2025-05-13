@@ -69,14 +69,33 @@ class DynamoDBClient:
             raise DynamoDBError(f"Failed to delete item from {table_name}: {str(e)}")
     
     def query(self, table_name: str, key_condition_expression: str, 
-             expression_attribute_values: dict) -> dict:
-        """Query items from a DynamoDB table"""
+             expression_attribute_values: dict, scan_index_forward: bool = True,
+             limit: int = None) -> dict:
+        """
+        Query items from a DynamoDB table
+        
+        Args:
+            table_name (str): Name of the table to query
+            key_condition_expression (str): The condition expression for the query
+            expression_attribute_values (dict): Values for the condition expression
+            scan_index_forward (bool): Whether to scan forward or backward (default: True)
+            limit (int): Maximum number of items to return (default: None)
+            
+        Returns:
+            dict: The query response containing Items and other metadata
+        """
         try:
             table = self.get_table(table_name)
-            response = table.query(
-                KeyConditionExpression=key_condition_expression,
-                ExpressionAttributeValues=expression_attribute_values
-            )
+            query_params = {
+                'KeyConditionExpression': key_condition_expression,
+                'ExpressionAttributeValues': expression_attribute_values,
+                'ScanIndexForward': scan_index_forward
+            }
+            
+            if limit is not None:
+                query_params['Limit'] = limit
+                
+            response = table.query(**query_params)
             return response
         except (ClientError, Exception) as e:
             logger.error(f"Error querying items from {table_name}: {str(e)}", exc_info=True)
