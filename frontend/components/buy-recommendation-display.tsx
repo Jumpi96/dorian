@@ -1,23 +1,50 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ThumbsUp, ThumbsDown } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { submitFeedback } from "@/lib/feedback-actions"
+import { getRecommendation } from "@/lib/recommendation-actions"
 
-export function BuyRecommendationDisplay() {
-  const [recommendation, setRecommendation] = useState({
-    item: "Navy blue blazer",
-    reason:
-      "A versatile blazer would complement your existing casual items and allow you to create more formal outfits. Navy is a classic color that pairs well with most of your current wardrobe.",
-  })
-  const [interactionId, setInteractionId] = useState("sample-id")
+interface BuyRecommendationDisplayProps {
+  situation?: string;
+}
+
+export function BuyRecommendationDisplay({ situation }: BuyRecommendationDisplayProps) {
+  const [recommendation, setRecommendation] = useState<{ item: string; explanation: string } | null>(null)
+  const [interactionId, setInteractionId] = useState<string | null>(null)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
 
+  useEffect(() => {
+    const fetchRecommendation = async () => {
+      if (!situation) return;
+      
+      setIsLoading(true);
+      try {
+        const data = await getRecommendation("buy", situation);
+        setRecommendation(data.item_to_buy);
+        setInteractionId(data.interaction_id);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to fetch purchase recommendation",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRecommendation();
+  }, [situation, toast]);
+
   const handleFeedback = async (type: "thumbsUp" | "thumbsDown") => {
+    if (!interactionId) return;
+    
     try {
       await submitFeedback(interactionId, type)
       setFeedbackSubmitted(true)
@@ -34,12 +61,34 @@ export function BuyRecommendationDisplay() {
     }
   }
 
+  // If no situation is provided
+  if (!situation) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center text-gray-500">
+          Tell me about your situation and I'll help you find the perfect addition to your wardrobe!
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // If loading
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center text-gray-500">
+          Loading your purchase recommendation...
+        </CardContent>
+      </Card>
+    )
+  }
+
   // If no recommendation has been generated yet
   if (!recommendation) {
     return (
       <Card>
         <CardContent className="p-6 text-center text-gray-500">
-          Enter a prompt above to get a purchase recommendation.
+          No purchase recommendation available.
         </CardContent>
       </Card>
     )
@@ -58,7 +107,7 @@ export function BuyRecommendationDisplay() {
           </div>
           <div>
             <h3 className="font-medium mb-2">Why:</h3>
-            <p>{recommendation.reason}</p>
+            <p>{recommendation.explanation}</p>
           </div>
         </div>
 
