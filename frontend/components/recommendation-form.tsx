@@ -11,10 +11,11 @@ import { getRecommendation } from "@/lib/recommendation-actions"
 type RecommendationMode = "wear" | "pack" | "buy"
 
 interface RecommendationFormProps {
-  mode: RecommendationMode
+  mode: RecommendationMode;
+  onSituationChange?: (situation: string) => void;
 }
 
-export function RecommendationForm({ mode }: RecommendationFormProps) {
+export function RecommendationForm({ mode, onSituationChange }: RecommendationFormProps) {
   const [prompt, setPrompt] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
@@ -25,6 +26,12 @@ export function RecommendationForm({ mode }: RecommendationFormProps) {
     buy: "What should I buy to complement my current wardrobe?",
   }
 
+  const buttonText = {
+    wear: "Find My Outfit",
+    pack: "Create Packing List",
+    buy: "Get Purchase Advice"
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!prompt.trim()) return
@@ -32,7 +39,7 @@ export function RecommendationForm({ mode }: RecommendationFormProps) {
     setIsLoading(true)
     try {
       await getRecommendation(mode, prompt)
-      // In a real app, this would update state or trigger a rerender
+      onSituationChange?.(prompt.trim())
       toast({
         title: "Recommendation generated",
         description: "Your recommendation has been generated.",
@@ -57,7 +64,7 @@ export function RecommendationForm({ mode }: RecommendationFormProps) {
         className="mb-4 h-24"
       />
       <Button type="submit" disabled={isLoading || !prompt.trim()}>
-        {isLoading ? "Generating..." : "Get Recommendation"}
+        {isLoading ? "Generating..." : buttonText[mode]}
       </Button>
     </form>
   )

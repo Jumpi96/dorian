@@ -116,7 +116,6 @@ export function WardrobeSection() {
     )
   }
 
-  console.log(items);
   return (
     <Card>
       <CardHeader>
