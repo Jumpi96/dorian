@@ -32,6 +32,7 @@ class LLMService:
         self.rate_limit_service.check_and_increment(user_id)
         
         try:
+            logger.info(f"Sending prompt to OpenAI: {prompt}")
             response = self.client.chat.completions.create(
                 model=model,
                 messages=[

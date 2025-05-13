@@ -26,4 +26,14 @@ output "rate_limits_table_name" {
 output "rate_limits_table_arn" {
   description = "ARN of the rate limits DynamoDB table"
   value       = aws_dynamodb_table.rate_limits.arn
+}
+
+output "trips_table_name" {
+  description = "Name of the trips DynamoDB table"
+  value       = aws_dynamodb_table.trips.name
+}
+
+output "trips_table_arn" {
+  description = "ARN of the trips DynamoDB table"
+  value       = aws_dynamodb_table.trips.arn
 } 

@@ -7,9 +7,12 @@ from app.services.rate_limit import RateLimitService
 from app.services.wardrobe import WardrobeService
 from app.services.recommendations import RecommendationsService
 from app.services.interactions import InteractionsService
+from app.services.trips import TripsService
 from app.routes.auth import init_auth_routes
 from app.routes.wardrobe import init_wardrobe_routes
 from app.routes.recommendations import init_recommendation_routes
+from app.services.text_transformations import TextTransformationsService
+
 
 oauth = OAuth()
 
@@ -36,10 +39,12 @@ def create_app(dynamoDBClient=DynamoDBClient(), google=None):
     wardrobe_service = WardrobeService(dynamoDBClient)
     recommendations_service = RecommendationsService(llm_service, wardrobe_service)
     interactions_service = InteractionsService(dynamoDBClient)
+    trips_service = TripsService(dynamoDBClient)
+    text_transformations_service = TextTransformationsService(llm_service)
 
     # Initialize routes
     init_auth_routes(app, google)
     init_wardrobe_routes(app, wardrobe_service)
-    init_recommendation_routes(app, recommendations_service, interactions_service)
+    init_recommendation_routes(app, recommendations_service, interactions_service, trips_service, text_transformations_service)
     
     return app

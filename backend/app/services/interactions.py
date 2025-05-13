@@ -78,4 +78,40 @@ class InteractionsService:
             return interaction_id
         except DynamoDBError as e:
             logger.error(f"Error saving purchase recommendation interaction: {str(e)}", exc_info=True)
+            raise
+
+    def save_trip_interaction(self, user_id: str, description: str, packing_list: dict) -> str:
+        """
+        Save a trip interaction to DynamoDB.
+        
+        Args:
+            user_id (str): The user's ID
+            description (str): The trip description
+            packing_list (dict): The complete packing list recommendation
+            
+        Returns:
+            str: The trip ID
+            
+        Raises:
+            DynamoDBError: If there's an error saving to DynamoDB
+        """
+        try:
+            timestamp = datetime.now(UTC).isoformat()
+            trip_id = f"trip_{timestamp}"
+            
+            self.dynamodb.put_item(
+                table_name=self.table_name,
+                item={
+                    "interactionId": trip_id,
+                    "userId": user_id,
+                    "type": "trip",
+                    "description": description,
+                    "packingList": packing_list,
+                    "createdAt": timestamp
+                }
+            )
+            
+            return trip_id
+        except DynamoDBError as e:
+            logger.error(f"Error saving trip interaction: {str(e)}", exc_info=True)
             raise 

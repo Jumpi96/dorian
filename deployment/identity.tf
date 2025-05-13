@@ -34,7 +34,9 @@ resource "aws_iam_policy" "dynamodb_access" {
           module.dynamodb.interactions_table_arn,
           "${module.dynamodb.interactions_table_arn}/index/*",
           module.dynamodb.rate_limits_table_arn,
-          "${module.dynamodb.rate_limits_table_arn}/index/*"
+          "${module.dynamodb.rate_limits_table_arn}/index/*",
+          module.dynamodb.trips_table_arn,
+          "${module.dynamodb.trips_table_arn}/index/*"
         ]
       }
     ]

@@ -3,11 +3,13 @@ import logging
 
 from app.services.recommendations import RecommendationsService, InsufficientWardrobeError
 from app.services.interactions import InteractionsService
+from app.services.trips import TripsService
+from app.services.text_transformations import TextTransformationsService
 from app.routes.auth import requires_auth
 
 logger = logging.getLogger(__name__)
 
-def init_recommendation_routes(app, recommendations_service: RecommendationsService, interactions_service: InteractionsService):
+def init_recommendation_routes(app, recommendations_service: RecommendationsService, interactions_service: InteractionsService, trips_service: TripsService, text_transformations_service: TextTransformationsService):
     @app.route('/recommend/wear', methods=['POST'])
     @requires_auth
     def recommend_outfit():
@@ -84,4 +86,54 @@ def init_recommendation_routes(app, recommendations_service: RecommendationsServ
             }), 400
         except Exception as e:
             logger.error(f"Error in purchase recommendation: {str(e)}", exc_info=True)
+            return jsonify({"error": str(e)}), 500
+
+    @app.route('/recommend/pack', methods=['POST'])
+    @requires_auth
+    def recommend_packing_list():
+        """
+        Recommend a packing list based on the user's wardrobe and trip description.
+        """
+        try:
+            data = request.get_json()
+            if not data or 'situation' not in data:
+                return jsonify({"error": "Missing situation in request"}), 400
+
+            situation = data['situation']
+            user_id = request.user['sub']
+
+            # Get recommendation
+            packing_list = recommendations_service.get_packing_recommendation(user_id, situation)
+            
+            # Generate a clean title from the situation
+            description = text_transformations_service.generate_trip_title(situation, user_id)
+            
+            # Save trip
+            trip_id = trips_service.save_trip(
+                user_id=user_id,
+                description=description,
+                packing_list=packing_list
+            )
+
+            # Save interaction
+            interactions_service.save_trip_interaction(
+                user_id=user_id,
+                description=description,
+                packing_list=packing_list
+            )
+            
+            return jsonify({
+                "trip_id": trip_id,
+                "description": description,
+                "packing_list": packing_list
+            })
+            
+        except InsufficientWardrobeError as e:
+            return jsonify({
+                "error": str(e),
+                "type": "insufficient_wardrobe",
+                "message": "Please add more items to your wardrobe before requesting recommendations."
+            }), 400
+        except Exception as e:
+            logger.error(f"Error in packing list recommendation: {str(e)}", exc_info=True)
             return jsonify({"error": str(e)}), 500
