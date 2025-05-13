@@ -16,10 +16,9 @@ class RateLimitService:
         self.dynamodb = dynamodb_client
         self.table_name = RATE_LIMIT_TABLE
 
-    def _get_today_key(self, user_id: str) -> str:
-        """Generate a unique key for today's rate limit record"""
-        today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-        return f"{user_id}:{today}"
+    def _get_today_date(self) -> str:
+        """Get today's date in YYYY-MM-DD format"""
+        return datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
     def check_and_increment(self, user_id: str) -> bool:
         """
@@ -35,12 +34,15 @@ class RateLimitService:
             RateLimitError: If rate limit is exceeded
         """
         try:
-            today_key = self._get_today_key(user_id)
+            today = self._get_today_date()
             
             # Try to get existing record
             response = self.dynamodb.get_item(
                 table_name=self.table_name,
-                key={'id': today_key}
+                key={
+                    'userId': user_id,
+                    'date': today
+                }
             )
             
             if 'Item' not in response:
@@ -48,8 +50,8 @@ class RateLimitService:
                 self.dynamodb.put_item(
                     table_name=self.table_name,
                     item={
-                        'id': today_key,
                         'userId': user_id,
+                        'date': today,
                         'count': 1,
                         'createdAt': str(datetime.now(timezone.utc))
                     }
@@ -64,7 +66,10 @@ class RateLimitService:
             # Increment count
             self.dynamodb.update_item(
                 table_name=self.table_name,
-                key={'id': today_key},
+                key={
+                    'userId': user_id,
+                    'date': today
+                },
                 update_expression='SET #count = #count + :inc',
                 expression_attribute_names={'#count': 'count'},
                 expression_attribute_values={':inc': 1}
