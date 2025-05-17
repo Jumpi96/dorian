@@ -10,9 +10,10 @@ import { getRecommendation } from "@/lib/recommendation-actions"
 
 interface OutfitDisplayProps {
   situation?: string;
+  tripId?: string;
 }
 
-export function OutfitDisplay({ situation }: OutfitDisplayProps) {
+export function OutfitDisplay({ situation, tripId }: OutfitDisplayProps) {
   const [outfit, setOutfit] = useState<Record<string, string> | null>(null)
   const [interactionId, setInteractionId] = useState<string | null>(null)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
@@ -25,7 +26,7 @@ export function OutfitDisplay({ situation }: OutfitDisplayProps) {
       
       setIsLoading(true);
       try {
-        const data = await getRecommendation("wear", situation);
+        const data = await getRecommendation("wear", situation, tripId);
         setOutfit(data.outfit);
         setInteractionId(data.interaction_id);
       } catch (error) {
@@ -40,7 +41,7 @@ export function OutfitDisplay({ situation }: OutfitDisplayProps) {
     };
 
     fetchOutfit();
-  }, [situation, toast]);
+  }, [situation, tripId, toast]);
 
   const handleFeedback = async (type: "thumbsUp" | "thumbsDown") => {
     if (!interactionId) return;

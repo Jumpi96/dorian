@@ -6,7 +6,7 @@ import { cookies } from "next/headers"
 type RecommendationMode = "wear" | "pack" | "buy"
 
 // In a real app, this would interact with a database and LLM API
-export async function getRecommendation(mode: RecommendationMode, prompt: string) {
+export async function getRecommendation(mode: RecommendationMode, prompt: string, tripId?: string) {
   const cookieStore = await cookies()
   const token = cookieStore.get('auth_token')?.value
 
@@ -14,7 +14,12 @@ export async function getRecommendation(mode: RecommendationMode, prompt: string
     throw new Error('Not authenticated')
   }
 
-  const response = await fetch(`http://localhost:3001/recommend/${mode}`, {
+  const url = new URL(`http://localhost:3001/recommend/${mode}`)
+  if (tripId) {
+    url.searchParams.append('tripId', tripId)
+  }
+
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

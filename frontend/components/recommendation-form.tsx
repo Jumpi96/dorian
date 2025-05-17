@@ -13,9 +13,11 @@ type RecommendationMode = "wear" | "pack" | "buy"
 interface RecommendationFormProps {
   mode: RecommendationMode;
   onSituationChange?: (situation: string) => void;
+  tripId?: string;
+  onTripCreated?: () => void;
 }
 
-export function RecommendationForm({ mode, onSituationChange }: RecommendationFormProps) {
+export function RecommendationForm({ mode, onSituationChange, tripId, onTripCreated }: RecommendationFormProps) {
   const [prompt, setPrompt] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
@@ -38,8 +40,18 @@ export function RecommendationForm({ mode, onSituationChange }: RecommendationFo
 
     setIsLoading(true)
     try {
-      await getRecommendation(mode, prompt)
-      onSituationChange?.(prompt.trim())
+      const data = await getRecommendation(mode, prompt, tripId)
+      
+      // Only trigger outfit recommendation for wear and buy modes
+      if (mode !== "pack") {
+        onSituationChange?.(prompt.trim())
+      }
+      
+      // If this was a pack recommendation, we need to refresh the trip data
+      if (mode === "pack") {
+        onTripCreated?.()
+      }
+
       toast({
         title: "Recommendation generated",
         description: "Your recommendation has been generated.",
