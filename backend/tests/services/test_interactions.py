@@ -47,6 +47,7 @@ def test_save_recommendation_interaction_success(interactions_service, mock_dyna
                 "type": "outfit_recommendation",
                 "situation": situation,
                 "recommendation": recommendation,
+                "tripId": None,
                 "createdAt": mock_now.isoformat()
             }
         )

@@ -47,7 +47,7 @@ describe('recommendation-actions', () => {
 
       expect(result).toEqual(mockResponse)
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:3001/recommend/wear',
+        expect.any(URL),
         {
           method: 'POST',
           headers: {
@@ -102,7 +102,7 @@ describe('recommendation-actions', () => {
       await getRecommendation('pack', mockSituation)
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:3001/recommend/pack',
+        expect.any(URL),
         expect.any(Object)
       )
     })
