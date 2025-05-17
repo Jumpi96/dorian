@@ -41,9 +41,61 @@ class RecommendationsService:
                     f"Current items: {len(wardrobe_items)}"
                 )
             
-            # Construct the prompt
-            wardrobe_description = "\n".join([item["description"] for item in wardrobe_items])
-            prompt = f"""Given the following wardrobe items:
+            return self._generate_outfit_recommendation(wardrobe_items, situation, user_id)
+            
+        except InsufficientWardrobeError:
+            raise
+        except Exception as e:
+            logger.error(f"Error getting outfit recommendation: {str(e)}", exc_info=True)
+            raise
+
+    def get_trip_outfit_recommendation(self, trip: dict, situation: str) -> dict:
+        """
+        Get an outfit recommendation based on a trip's packing list and situation.
+        
+        Args:
+            trip (dict): The trip object containing description and packing list
+            situation (str): The situation the user described
+            
+        Returns:
+            dict: The outfit recommendation
+            
+        Raises:
+            Exception: If there's an error getting the recommendation
+        """
+        try:
+            # Transform packing list dictionary into a list of items
+            packing_list = []
+            for _, items in trip['packingList'].items():
+                if isinstance(items, list):
+                    packing_list.extend(items)
+                else:
+                    packing_list.append(items)
+
+            # Create wardrobe items from the packing list
+            wardrobe_items = [{"description": item} for item in packing_list]
+            
+            return self._generate_outfit_recommendation(wardrobe_items, situation, trip['userId'])
+            
+        except Exception as e:
+            logger.error(f"Error getting trip outfit recommendation: {str(e)}", exc_info=True)
+            raise
+
+    def _generate_outfit_recommendation(self, wardrobe_items: list, situation: str, user_id: str) -> dict:
+        """
+        Internal method to generate outfit recommendations.
+        
+        Args:
+            wardrobe_items (list): List of wardrobe items
+            situation (str): The situation description
+            user_id (str): The user's ID
+            
+        Returns:
+            dict: The outfit recommendation
+        """
+        # Construct the prompt
+        wardrobe_description = "\n".join([item["description"] for item in wardrobe_items])
+        prompt = f"""Given the following wardrobe items:
 {wardrobe_description}
 
 The user is in this situation: {situation}
@@ -57,14 +109,8 @@ Recommend an outfit using only items from their wardrobe. Format the response as
     "accessories": "description of accessories (optional)"
 }}"""
 
-            # Get recommendation from LLM
-            return self.llm_service.get_completion(prompt, user_id)
-            
-        except InsufficientWardrobeError:
-            raise
-        except Exception as e:
-            logger.error(f"Error getting outfit recommendation: {str(e)}", exc_info=True)
-            raise
+        # Get recommendation from LLM
+        return self.llm_service.get_completion(prompt, user_id)
 
     def get_items_to_buy_recommendation(self, user_id: str, situation: str) -> dict:
         """

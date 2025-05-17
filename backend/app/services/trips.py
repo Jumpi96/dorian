@@ -82,6 +82,41 @@ class TripsService:
             logger.error(f"Error getting user trip: {str(e)}", exc_info=True)
             raise
 
+    def get_trip(self, trip_id: str, user_id: str) -> dict:
+        """
+        Get a specific trip by ID.
+        
+        Args:
+            trip_id (str): The ID of the trip to get
+            user_id (str): The user's ID
+            
+        Returns:
+            dict: The trip data
+            
+        Raises:
+            TripNotFoundError: If the trip is not found
+            DynamoDBError: If there's an error querying DynamoDB
+        """
+        try:
+            response = self.dynamodb.get_item(
+                table_name=self.table_name,
+                key={
+                    'userId': user_id,
+                    'tripId': trip_id
+                }
+            )
+            
+            if 'Item' not in response:
+                raise TripNotFoundError(f"Trip {trip_id} not found")
+                
+            return response['Item']
+            
+        except TripNotFoundError:
+            raise
+        except DynamoDBError as e:
+            logger.error(f"Error getting trip: {str(e)}", exc_info=True)
+            raise
+
     def delete_trip(self, user_id: str, trip_id: str) -> None:
         """
         Delete a specific trip.

@@ -11,7 +11,7 @@ class InteractionsService:
         self.dynamodb = dynamodb_client
         self.table_name = INTERACTIONS_TABLE
 
-    def save_recommendation_interaction(self, user_id: str, situation: str, recommendation: dict) -> str:
+    def save_recommendation_interaction(self, user_id: str, situation: str, recommendation: dict, trip_id: str = None) -> str:
         """
         Save an outfit recommendation interaction to DynamoDB.
         
@@ -37,6 +37,7 @@ class InteractionsService:
                     "type": "outfit_recommendation",
                     "situation": situation,
                     "recommendation": recommendation,
+                    "tripId": trip_id,
                     "createdAt": timestamp
                 }
             )

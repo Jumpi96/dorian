@@ -14,10 +14,7 @@ export async function getRecommendation(mode: RecommendationMode, prompt: string
     throw new Error('Not authenticated')
   }
 
-  const url = new URL(`http://localhost:3001/recommend/${mode}`)
-  if (tripId) {
-    url.searchParams.append('tripId', tripId)
-  }
+  const url = new URL(`http://localhost:3001/recommend/${mode}${tripId ? `/trip/${tripId}` : ''}`)
 
   const response = await fetch(url, {
     method: 'POST',

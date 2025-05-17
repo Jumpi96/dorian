@@ -5,7 +5,7 @@ from app.clients.dynamodb import DynamoDBClient, DynamoDBError
 logger = logging.getLogger(__name__)
 
 RATE_LIMIT_TABLE = 'dev-rate-limits'
-MAX_REQUESTS_PER_DAY = 10
+MAX_REQUESTS_PER_DAY = 100
 
 class RateLimitError(Exception):
     """Exception raised when rate limit is exceeded"""

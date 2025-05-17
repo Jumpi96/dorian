@@ -49,6 +49,54 @@ def init_recommendation_routes(app, recommendations_service: RecommendationsServ
             logger.error(f"Error in outfit recommendation: {str(e)}", exc_info=True)
             return jsonify({"error": str(e)}), 500
 
+    @app.route('/recommend/wear/trip/<trip_id>', methods=['POST'])
+    @requires_auth
+    def recommend_outfit_for_trip(trip_id):
+        """
+        Recommend an outfit based on a specific trip's context.
+        """
+        try:
+            user_id = request.user['sub']
+            
+            # Get trip details
+            trip = trips_service.get_trip(trip_id, user_id)
+            if not trip:
+                return jsonify({"error": "Trip not found"}), 404
+            
+            data = request.get_json()
+            if not data or 'situation' not in data:
+                return jsonify({"error": "Missing situation in request"}), 400
+
+            situation = data['situation']
+
+            # Get recommendation based on trip context
+            recommendation = recommendations_service.get_trip_outfit_recommendation(
+                trip=trip, situation=situation
+            )
+            
+            # Save interaction
+            interaction_id = interactions_service.save_recommendation_interaction(
+                user_id=user_id,
+                situation=situation,
+                recommendation=recommendation,
+                trip_id=trip_id
+            )
+            
+            return jsonify({
+                "outfit": recommendation,
+                "interaction_id": interaction_id
+            })
+            
+        except InsufficientWardrobeError as e:
+            return jsonify({
+                "error": str(e),
+                "type": "insufficient_wardrobe",
+                "message": "Please add more items to your wardrobe before requesting recommendations."
+            }), 400
+        except Exception as e:
+            logger.error(f"Error in trip outfit recommendation: {str(e)}", exc_info=True)
+            return jsonify({"error": str(e)}), 500
+
     @app.route('/recommend/buy', methods=['POST'])
     @requires_auth
     def recommend_items_to_buy():
