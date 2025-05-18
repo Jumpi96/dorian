@@ -31,3 +31,47 @@ def init_interaction_routes(app, interactions_service: InteractionsService):
         except Exception as e:
             logger.error(f"Error getting user interactions: {str(e)}", exc_info=True)
             return jsonify({"error": str(e)}), 500
+
+    @app.route('/interactions/<interaction_id>/feedback', methods=['PATCH'])
+    @requires_auth
+    def update_interaction_feedback(interaction_id):
+        """
+        Update an interaction with user feedback.
+        
+        Args:
+            interaction_id (str): The ID of the interaction to update
+            
+        Request body:
+            {
+                "feedback": 1  # 1 for positive, 0 for negative
+            }
+        """
+        try:
+            user_id = request.user['sub']
+            data = request.get_json()
+            
+            if not data or 'feedback' not in data:
+                return jsonify({
+                    "error": "Missing feedback",
+                    "type": "validation_error",
+                    "message": "Feedback value is required"
+                }), 400
+                
+            feedback = data['feedback']
+            if feedback not in [0, 1]:
+                return jsonify({
+                    "error": "Invalid feedback value",
+                    "type": "validation_error",
+                    "message": "Feedback must be either 0 or 1"
+                }), 400
+            
+            # Update the interaction with feedback
+            interactions_service.update_interaction_feedback(user_id, interaction_id, feedback)
+            
+            return jsonify({
+                "message": "Feedback updated successfully"
+            })
+            
+        except Exception as e:
+            logger.error(f"Error updating interaction feedback: {str(e)}", exc_info=True)
+            return jsonify({"error": str(e)}), 500

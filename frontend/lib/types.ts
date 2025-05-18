@@ -5,6 +5,7 @@ export interface BaseInteraction {
   interactionId: string;
   type: InteractionType;
   userId: string;
+  feedback?: string;  // "1" for positive, "0" for negative, undefined if no feedback
 }
 
 export interface OutfitRecommendation extends BaseInteraction {

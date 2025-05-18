@@ -72,4 +72,68 @@ def test_save_recommendation_interaction_dynamodb_error(interactions_service, mo
             recommendation=recommendation
         )
     
+    assert str(exc_info.value) == "Test error"
+
+def test_update_interaction_feedback_success(interactions_service, mock_dynamodb):
+    # Arrange
+    user_id = "test_user"
+    interaction_id = "rec_123"
+    feedback = 1  # Positive feedback
+    
+    # Act
+    interactions_service.update_interaction_feedback(user_id, interaction_id, feedback)
+    
+    # Assert
+    mock_dynamodb.update_item.assert_called_once_with(
+        table_name="dev-interactions",
+        key={
+            "userId": user_id,
+            "interactionId": interaction_id
+        },
+        update_expression="SET #feedback = :feedback",
+        expression_attribute_names={
+            "#feedback": "feedback"
+        },
+        expression_attribute_values={
+            ":feedback": feedback
+        }
+    )
+
+def test_update_interaction_feedback_negative(interactions_service, mock_dynamodb):
+    # Arrange
+    user_id = "test_user"
+    interaction_id = "rec_123"
+    feedback = 0  # Negative feedback
+    
+    # Act
+    interactions_service.update_interaction_feedback(user_id, interaction_id, feedback)
+    
+    # Assert
+    mock_dynamodb.update_item.assert_called_once_with(
+        table_name="dev-interactions",
+        key={
+            "userId": user_id,
+            "interactionId": interaction_id
+        },
+        update_expression="SET #feedback = :feedback",
+        expression_attribute_names={
+            "#feedback": "feedback"
+        },
+        expression_attribute_values={
+            ":feedback": feedback
+        }
+    )
+
+def test_update_interaction_feedback_dynamodb_error(interactions_service, mock_dynamodb):
+    # Arrange
+    user_id = "test_user"
+    interaction_id = "rec_123"
+    feedback = 1
+    
+    mock_dynamodb.update_item.side_effect = DynamoDBError("Test error")
+    
+    # Act & Assert
+    with pytest.raises(DynamoDBError) as exc_info:
+        interactions_service.update_interaction_feedback(user_id, interaction_id, feedback)
+    
     assert str(exc_info.value) == "Test error" 

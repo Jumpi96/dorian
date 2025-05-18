@@ -167,4 +167,35 @@ class InteractionsService:
             )
         except DynamoDBError as e:
             logger.error(f"Error deleting interaction: {str(e)}", exc_info=True)
+            raise
+
+    def update_interaction_feedback(self, user_id: str, interaction_id: str, feedback: int) -> None:
+        """
+        Update an interaction with user feedback.
+        
+        Args:
+            user_id (str): The user's ID
+            interaction_id (str): The interaction ID to update
+            feedback (int): The feedback value (1 for positive, 0 for negative)
+            
+        Raises:
+            DynamoDBError: If there's an error updating DynamoDB
+        """
+        try:
+            self.dynamodb.update_item(
+                table_name=self.table_name,
+                key={
+                    "userId": user_id,
+                    "interactionId": interaction_id
+                },
+                update_expression="SET #feedback = :feedback",
+                expression_attribute_names={
+                    "#feedback": "feedback"
+                },
+                expression_attribute_values={
+                    ":feedback": feedback
+                }
+            )
+        except DynamoDBError as e:
+            logger.error(f"Error updating interaction feedback: {str(e)}", exc_info=True)
             raise 

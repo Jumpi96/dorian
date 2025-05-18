@@ -17,7 +17,9 @@ export function OutfitDisplay({ situation, tripId }: OutfitDisplayProps) {
   const [outfit, setOutfit] = useState<Record<string, string> | null>(null)
   const [interactionId, setInteractionId] = useState<string | null>(null)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
+  const [selectedFeedback, setSelectedFeedback] = useState<"thumbsUp" | "thumbsDown" | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -44,11 +46,13 @@ export function OutfitDisplay({ situation, tripId }: OutfitDisplayProps) {
   }, [situation, tripId, toast]);
 
   const handleFeedback = async (type: "thumbsUp" | "thumbsDown") => {
-    if (!interactionId) return;
+    if (!interactionId || isSubmittingFeedback) return;
     
+    setIsSubmittingFeedback(true);
     try {
       await submitFeedback(interactionId, type)
       setFeedbackSubmitted(true)
+      setSelectedFeedback(type)
       toast({
         title: "Feedback submitted",
         description: "Thank you for your feedback!",
@@ -56,9 +60,11 @@ export function OutfitDisplay({ situation, tripId }: OutfitDisplayProps) {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to submit feedback.",
+        description: error instanceof Error ? error.message : "Failed to submit feedback.",
         variant: "destructive",
       })
+    } finally {
+      setIsSubmittingFeedback(false);
     }
   }
 
@@ -111,11 +117,23 @@ export function OutfitDisplay({ situation, tripId }: OutfitDisplayProps) {
         </div>
 
         <div className="flex justify-center gap-4">
-          <Button variant="outline" size="sm" onClick={() => handleFeedback("thumbsUp")} disabled={feedbackSubmitted}>
+          <Button 
+            variant={selectedFeedback === "thumbsUp" ? "default" : "outline"}
+            size="sm" 
+            onClick={() => handleFeedback("thumbsUp")} 
+            disabled={feedbackSubmitted || isSubmittingFeedback}
+            className={selectedFeedback === "thumbsUp" ? "bg-green-600 hover:bg-green-700" : ""}
+          >
             <ThumbsUp className="h-4 w-4 mr-2" />
             Like
           </Button>
-          <Button variant="outline" size="sm" onClick={() => handleFeedback("thumbsDown")} disabled={feedbackSubmitted}>
+          <Button 
+            variant={selectedFeedback === "thumbsDown" ? "default" : "outline"}
+            size="sm" 
+            onClick={() => handleFeedback("thumbsDown")} 
+            disabled={feedbackSubmitted || isSubmittingFeedback}
+            className={selectedFeedback === "thumbsDown" ? "bg-red-600 hover:bg-red-700" : ""}
+          >
             <ThumbsDown className="h-4 w-4 mr-2" />
             Dislike
           </Button>

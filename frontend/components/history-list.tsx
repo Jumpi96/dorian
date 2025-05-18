@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/components/ui/use-toast"
 import { Badge } from "@/components/ui/badge"
+import { ThumbsUp, ThumbsDown } from "lucide-react"
 
 export function HistoryList() {
   const [interactions, setInteractions] = useState<Interaction[]>([])
@@ -99,6 +100,15 @@ export function HistoryList() {
                   <span className="text-sm text-gray-500">
                     {format(new Date(interaction.createdAt), "PPP p")}
                   </span>
+                  {interaction.feedback !== undefined && (
+                    <div className="ml-2">
+                      {interaction.feedback === "1" ? (
+                        <ThumbsUp className="h-4 w-4 text-green-600" />
+                      ) : interaction.feedback === "0" ? (
+                        <ThumbsDown className="h-4 w-4 text-red-600" />
+                      ) : null}
+                    </div>
+                  )}
                 </div>
                 <CardTitle className="text-lg">
                   {interaction.type === "outfit_recommendation" && interaction.situation}
