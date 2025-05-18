@@ -1,158 +1,176 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { Interaction } from "@/lib/types"
+import { getInteractions } from "@/lib/interaction-actions"
+import { format } from "date-fns"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useToast } from "@/components/ui/use-toast"
 import { Badge } from "@/components/ui/badge"
-import { formatDistanceToNow } from "date-fns"
-
-type HistoryItem = {
-  id: string
-  mode: "wear" | "pack" | "buy"
-  prompt: string
-  response: any
-  timestamp: string
-  feedback?: "thumbsUp" | "thumbsDown"
-}
 
 export function HistoryList() {
-  const [history, setHistory] = useState<HistoryItem[]>([
-    {
-      id: "1",
-      mode: "wear",
-      prompt: "What should I wear to a casual dinner?",
-      response: {
-        top: "Black t-shirt",
-        bottom: "Olive chinos",
-        shoes: "White sneakers",
-        outerwear: "Grey hoodie",
-      },
-      timestamp: "2025-04-08T14:00:00Z",
-      feedback: "thumbsUp",
-    },
-    {
-      id: "2",
-      mode: "pack",
-      prompt: "What should I pack for a weekend trip?",
-      response: {
-        tops: ["White t-shirt", "Blue button-up shirt"],
-        bottoms: ["Blue jeans", "Khaki shorts"],
-        shoes: ["White sneakers"],
-        outerwear: ["Light jacket"],
-      },
-      timestamp: "2025-04-07T10:30:00Z",
-      feedback: "thumbsDown",
-    },
-    {
-      id: "3",
-      mode: "buy",
-      prompt: "What should I buy next?",
-      response: {
-        item: "Navy blue blazer",
-        reason: "A versatile blazer would complement your existing casual items.",
-      },
-      timestamp: "2025-04-06T16:45:00Z",
-    },
-  ])
+  const [interactions, setInteractions] = useState<Interaction[]>([])
+  const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
 
-  if (history.length === 0) {
+  useEffect(() => {
+    const fetchInteractions = async () => {
+      try {
+        const data = await getInteractions()
+        setInteractions(data)
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load history",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchInteractions()
+  }, [toast])
+
+  const getBadgeVariant = (type: string): "default" | "secondary" | "outline" => {
+    switch (type) {
+      case "outfit_recommendation":
+        return "default"
+      case "trip":
+        return "secondary"
+      case "purchase_recommendation":
+        return "outline"
+      default:
+        return "default"
+    }
+  }
+
+  const getBadgeText = (type: string): string => {
+    switch (type) {
+      case "outfit_recommendation":
+        return "WEAR"
+      case "trip":
+        return "PACK"
+      case "purchase_recommendation":
+        return "BUY"
+      default:
+        return type.toUpperCase()
+    }
+  }
+
+  if (loading) {
     return (
-      <Card>
-        <CardContent className="p-6 text-center text-gray-500">
-          You haven't received any recommendations yet.
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <Card key={i}>
+            <CardHeader>
+              <Skeleton className="h-6 w-1/3" data-testid="skeleton" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-4 w-full mb-2" data-testid="skeleton" />
+              <Skeleton className="h-4 w-2/3" data-testid="skeleton" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
+  if (interactions.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">No history available yet.</p>
+      </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {history.map((item) => (
-        <Card key={item.itemId}>
+    <div className="space-y-4">
+      {interactions.map((interaction) => (
+        <Card key={interaction.interactionId}>
           <CardHeader className="pb-2">
             <div className="flex justify-between items-start">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <Badge variant={getBadgeVariant(item.mode)}>{item.mode.toUpperCase()}</Badge>
+                  <Badge variant={getBadgeVariant(interaction.type)}>
+                    {getBadgeText(interaction.type)}
+                  </Badge>
                   <span className="text-sm text-gray-500">
-                    {formatDistanceToNow(new Date(item.timestamp), { addSuffix: true })}
+                    {format(new Date(interaction.createdAt), "PPP p")}
                   </span>
                 </div>
-                <CardTitle className="text-lg">{item.prompt}</CardTitle>
+                <CardTitle className="text-lg">
+                  {interaction.type === "outfit_recommendation" && interaction.situation}
+                  {interaction.type === "trip" && interaction.description}
+                </CardTitle>
               </div>
-              {item.feedback && (
-                <Badge variant={item.feedback === "thumbsUp" ? "outline" : "secondary"}>
-                  {item.feedback === "thumbsUp" ? "Liked" : "Disliked"}
-                </Badge>
-              )}
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {item.mode === "wear" && renderWearResponse(item.response)}
-              {item.mode === "pack" && renderPackResponse(item.response)}
-              {item.mode === "buy" && renderBuyResponse(item.response)}
-            </div>
+            {interaction.type === "outfit_recommendation" && (
+              <div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <p><span className="font-medium">Top:</span> {interaction.recommendation.top}</p>
+                  <p><span className="font-medium">Bottom:</span> {interaction.recommendation.bottom}</p>
+                  <p><span className="font-medium">Outerwear:</span> {interaction.recommendation.outerwear}</p>
+                  <p><span className="font-medium">Shoes:</span> {interaction.recommendation.shoes}</p>
+                </div>
+              </div>
+            )}
+            {interaction.type === "purchase_recommendation" && (
+              <div>
+                <p className="font-medium">Recommended Item: {interaction.recommendation.item}</p>
+                <p className="text-sm mt-2">{interaction.recommendation.explanation}</p>
+              </div>
+            )}
+            {interaction.type === "trip" && (
+              <div className="space-y-2">
+                <div>
+                  <p className="font-medium">Tops:</p>
+                  <ul className="list-disc list-inside text-sm">
+                    {interaction.recommendation.packingList.tops.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium">Bottoms:</p>
+                  <ul className="list-disc list-inside text-sm">
+                    {interaction.recommendation.packingList.bottoms.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium">Outerwear:</p>
+                  <ul className="list-disc list-inside text-sm">
+                    {interaction.recommendation.packingList.outerwear.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium">Shoes:</p>
+                  <ul className="list-disc list-inside text-sm">
+                    {interaction.recommendation.packingList.shoes.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium">Accessories:</p>
+                  <ul className="list-disc list-inside text-sm">
+                    {interaction.recommendation.packingList.accessories.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}
     </div>
-  )
-}
-
-function getBadgeVariant(mode: string): "default" | "secondary" | "outline" {
-  switch (mode) {
-    case "wear":
-      return "default"
-    case "pack":
-      return "secondary"
-    case "buy":
-      return "outline"
-    default:
-      return "default"
-  }
-}
-
-function renderWearResponse(response: any) {
-  return (
-    <>
-      {Object.entries(response).map(([category, item]) => (
-        <div key={category} className="flex justify-between">
-          <span className="capitalize font-medium">{category}:</span>
-          <span>{item as string}</span>
-        </div>
-      ))}
-    </>
-  )
-}
-
-function renderPackResponse(response: any) {
-  return (
-    <>
-      {Object.entries(response).map(([category, items]) => (
-        <div key={category}>
-          <h3 className="capitalize font-medium mb-1">{category}:</h3>
-          <ul className="list-disc pl-5">
-            {(items as string[]).map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ul>
-        </div>
-      ))}
-    </>
-  )
-}
-
-function renderBuyResponse(response: any) {
-  return (
-    <>
-      <div>
-        <h3 className="font-medium mb-1">Item:</h3>
-        <p>{response.item}</p>
-      </div>
-      <div className="mt-2">
-        <h3 className="font-medium mb-1">Why:</h3>
-        <p>{response.reason}</p>
-      </div>
-    </>
   )
 }

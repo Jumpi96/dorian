@@ -122,7 +122,7 @@ class InteractionsService:
 
     def get_user_interactions(self, user_id: str) -> list:
         """
-        Get all interactions for a user from DynamoDB.
+        Get all interactions for a user from DynamoDB, sorted by creation date in descending order.
         
         Args:
             user_id (str): The user's ID
@@ -137,7 +137,8 @@ class InteractionsService:
             response = self.dynamodb.query(
                 table_name=self.table_name,
                 key_condition_expression="userId = :user_id",
-                expression_attribute_values={":user_id": user_id}
+                expression_attribute_values={":user_id": user_id},
+                scan_index_forward=False  # This will sort in descending order
             )
             
             return response.get('Items', [])
