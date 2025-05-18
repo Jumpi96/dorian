@@ -33,9 +33,39 @@ describe('BuyRecommendationDisplay', () => {
     expect(screen.getByText(/Tell me about your situation/i)).toBeInTheDocument()
   })
 
-  it('shows loading state while fetching recommendation', () => {
-    render(<BuyRecommendationDisplay situation="casual dinner" />)
+  it('shows loading state while fetching recommendation', async () => {
+    // Create a promise that we can control
+    let resolvePromise: (value: any) => void
+    const promise = new Promise((resolve) => {
+      resolvePromise = resolve
+    })
+    
+    // Mock getRecommendation to return our controlled promise
+    ;(getRecommendation as jest.Mock).mockImplementation(() => promise)
+
+    // Render the component
+    await act(async () => {
+      render(<BuyRecommendationDisplay situation="casual dinner" />)
+    })
+
+    // Verify loading state is shown
     expect(screen.getByText(/Loading your purchase recommendation/i)).toBeInTheDocument()
+
+    // Resolve the promise
+    await act(async () => {
+      resolvePromise({
+        item_to_buy: {
+          item: "Black leather loafers",
+          explanation: "These versatile loafers would be perfect for your casual dinner."
+        },
+        interaction_id: "test-interaction-id"
+      })
+    })
+
+    // Verify recommendation is shown after loading
+    await waitFor(() => {
+      expect(screen.getByText('Recommended Purchase')).toBeInTheDocument()
+    })
   })
 
   it('displays recommendation when data is loaded', async () => {
