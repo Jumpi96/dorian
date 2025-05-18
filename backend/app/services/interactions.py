@@ -108,7 +108,9 @@ class InteractionsService:
                     "userId": user_id,
                     "type": "trip",
                     "description": description,
-                    "packingList": packing_list,
+                    "recommendation": {
+                        "packingList": packing_list
+                    },
                     "createdAt": timestamp
                 }
             )
@@ -116,4 +118,52 @@ class InteractionsService:
             return trip_id
         except DynamoDBError as e:
             logger.error(f"Error saving trip interaction: {str(e)}", exc_info=True)
+            raise
+
+    def get_user_interactions(self, user_id: str) -> list:
+        """
+        Get all interactions for a user from DynamoDB.
+        
+        Args:
+            user_id (str): The user's ID
+            
+        Returns:
+            list: List of user interactions
+            
+        Raises:
+            DynamoDBError: If there's an error querying DynamoDB
+        """
+        try:
+            response = self.dynamodb.query(
+                table_name=self.table_name,
+                key_condition_expression="userId = :user_id",
+                expression_attribute_values={":user_id": user_id}
+            )
+            
+            return response.get('Items', [])
+        except DynamoDBError as e:
+            logger.error(f"Error getting user interactions: {str(e)}", exc_info=True)
+            raise
+
+    def delete_interaction(self, user_id: str, interaction_id: str) -> None:
+        """
+        Delete a specific interaction from DynamoDB.
+        
+        Args:
+            user_id (str): The user's ID
+            interaction_id (str): The interaction ID to delete
+            
+        Raises:
+            DynamoDBError: If there's an error deleting from DynamoDB
+        """
+        try:
+            self.dynamodb.delete_item(
+                table_name=self.table_name,
+                key={
+                    "userId": user_id,
+                    "interactionId": interaction_id
+                }
+            )
+        except DynamoDBError as e:
+            logger.error(f"Error deleting interaction: {str(e)}", exc_info=True)
             raise 
