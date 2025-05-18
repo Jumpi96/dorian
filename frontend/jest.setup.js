@@ -29,4 +29,6 @@ jest.mock('next/headers', () => ({
   cookies: jest.fn().mockReturnValue({
     get: jest.fn().mockReturnValue({ value: 'test-token' })
   })
-})) 
+}))
+
+process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001'; 
