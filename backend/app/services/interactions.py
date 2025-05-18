@@ -1,10 +1,11 @@
 import logging
 from datetime import datetime, UTC
 from app.clients.dynamodb import DynamoDBClient, DynamoDBError
+from app.config import Config
 
 logger = logging.getLogger(__name__)
 
-INTERACTIONS_TABLE = 'dev-interactions'
+INTERACTIONS_TABLE = f'{Config.ENV}-interactions'
 
 class InteractionsService:
     def __init__(self, dynamodb_client: DynamoDBClient):

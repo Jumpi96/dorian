@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = () => {
-    window.location.href = 'http://localhost:3001/auth/login';
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/login`;
   };
 
   const logout = () => {

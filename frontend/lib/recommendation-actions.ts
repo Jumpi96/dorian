@@ -14,7 +14,7 @@ export async function getRecommendation(mode: RecommendationMode, prompt: string
     throw new Error('Not authenticated')
   }
 
-  const url = new URL(`http://localhost:3001/recommend/${mode}${tripId ? `/trip/${tripId}` : ''}`)
+  const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/recommend/${mode}${tripId ? `/trip/${tripId}` : ''}`)
 
   const response = await fetch(url, {
     method: 'POST',
@@ -44,7 +44,7 @@ async function getWardrobeItems() {
     throw new Error('Not authenticated')
   }
 
-  const response = await fetch('http://localhost:3001/wardrobe', {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/wardrobe`, {
     headers: {
       'Authorization': `Bearer ${token}`
     }

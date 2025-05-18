@@ -1,11 +1,12 @@
 import logging
 from datetime import datetime, timezone
 from app.clients.dynamodb import DynamoDBClient, DynamoDBError
+from app.config import Config
 
 logger = logging.getLogger(__name__)
 
-RATE_LIMIT_TABLE = 'dev-rate-limits'
-MAX_REQUESTS_PER_DAY = 10
+RATE_LIMIT_TABLE = f'{Config.ENV}-rate-limits'
+MAX_REQUESTS_PER_DAY = Config.MAX_REQUESTS_PER_DAY
 
 class RateLimitError(Exception):
     """Exception raised when rate limit is exceeded"""

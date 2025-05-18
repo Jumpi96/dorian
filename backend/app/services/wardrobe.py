@@ -1,10 +1,11 @@
 import logging
 from datetime import datetime, UTC
 from app.clients.dynamodb import DynamoDBClient, DynamoDBError
+from app.config import Config
 
 logger = logging.getLogger(__name__)
 
-WARDROBE_TABLE_NAME = 'dev-wardrobe-items'
+WARDROBE_TABLE_NAME = f'{Config.ENV}-wardrobe-items'
 
 class WardrobeService:
     def __init__(self, dynamodb_client: DynamoDBClient):

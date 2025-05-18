@@ -1,10 +1,11 @@
 import logging
 from datetime import datetime, UTC
 from app.clients.dynamodb import DynamoDBClient, DynamoDBError
+from app.config import Config
 
 logger = logging.getLogger(__name__)
 
-TRIPS_TABLE = 'dev-trips'
+TRIPS_TABLE = f'{Config.ENV}-trips'
 
 class TripNotFoundError(Exception):
     """Exception raised when a trip is not found"""

@@ -11,7 +11,7 @@ export async function getCurrentTrip() {
     throw new Error('Not authenticated')
   }
 
-  const response = await fetch('http://localhost:3001/trips', {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/trips`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`
@@ -49,7 +49,7 @@ export async function deleteTrip(tripId: string) {
     throw new Error('Not authenticated')
   }
 
-  const response = await fetch(`http://localhost:3001/trips/${tripId}`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/trips/${tripId}`, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${token}`

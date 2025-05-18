@@ -1,8 +1,9 @@
 import pytest
 from unittest.mock import Mock, patch
 from datetime import datetime, timezone
-from app.services.rate_limit import RateLimitService, RateLimitError
+from app.services.rate_limit import RateLimitService, RateLimitError, MAX_REQUESTS_PER_DAY
 from app.clients.dynamodb import DynamoDBError
+from app.config import Config
 
 @pytest.fixture
 def mock_dynamodb_client():
@@ -24,7 +25,7 @@ def test_first_request_of_day(rate_limit_service, mock_dynamodb_client):
     mock_dynamodb_client.put_item.assert_called_once()
     # Verify the put_item call had the correct structure
     put_item_args = mock_dynamodb_client.put_item.call_args[1]
-    assert put_item_args['table_name'] == 'dev-rate-limits'
+    assert put_item_args['table_name'] == f'{Config.ENV}-rate-limits'
     assert put_item_args['item']['userId'] == 'user1'
     assert put_item_args['item']['count'] == 1
 
@@ -51,13 +52,14 @@ def test_increment_existing_count(mock_datetime, rate_limit_service, mock_dynamo
     mock_dynamodb_client.update_item.assert_called_once()
     # Verify the update_item call had the correct structure
     update_args = mock_dynamodb_client.update_item.call_args[1]
-    assert update_args['table_name'] == 'dev-rate-limits'
+    assert update_args['table_name'] == f'{Config.ENV}-rate-limits'
     assert update_args['key'] == {'date': '2024-03-20', 'userId': 'user1'}
     assert update_args['update_expression'] == 'SET #count = #count + :inc'
     assert update_args['expression_attribute_names'] == {'#count': 'count'}
     assert update_args['expression_attribute_values'] == {':inc': 1}
 
 @patch('app.services.rate_limit.datetime')
+@patch('app.services.rate_limit.MAX_REQUESTS_PER_DAY', 10)
 def test_rate_limit_exceeded(mock_datetime, rate_limit_service, mock_dynamodb_client):
     # Mock datetime to return a fixed date
     mock_datetime.now.return_value = datetime(2024, 3, 20, tzinfo=timezone.utc)

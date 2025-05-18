@@ -12,7 +12,7 @@ export async function addWardrobeItem(description: string): Promise<string> {
     throw new Error('Not authenticated')
   }
 
-  const response = await fetch('http://localhost:3001/wardrobe', {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/wardrobe`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -38,7 +38,7 @@ export async function deleteWardrobeItem(itemId: string): Promise<void> {
     throw new Error('Not authenticated')
   }
 
-  const response = await fetch(`http://localhost:3001/wardrobe/${itemId}`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/wardrobe/${itemId}`, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${token}`
@@ -60,7 +60,7 @@ export async function getWardrobeItems() {
     throw new Error('Not authenticated')
   }
 
-  const response = await fetch('http://localhost:3001/wardrobe', {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/wardrobe`, {
     headers: {
       'Authorization': `Bearer ${token}`
     }
