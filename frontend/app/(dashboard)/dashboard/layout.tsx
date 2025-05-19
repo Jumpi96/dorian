@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Shirt, LuggageIcon as Suitcase, ShoppingBag, History, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 
 export default function DashboardLayout({
   children,
@@ -15,10 +15,19 @@ export default function DashboardLayout({
 }) {
   const { logout } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
 
   const handleLogout = async () => {
     await logout()
     router.push("/")
+  }
+
+  const getActiveTab = () => {
+    if (pathname === "/dashboard") return "wear"
+    if (pathname === "/dashboard/pack") return "pack"
+    if (pathname === "/dashboard/buy") return "buy"
+    if (pathname === "/dashboard/history") return "history"
+    return "wear"
   }
 
   return (
@@ -40,7 +49,7 @@ export default function DashboardLayout({
       </header>
 
       <div className="container py-4">
-        <Tabs defaultValue="wear" className="w-full">
+        <Tabs value={getActiveTab()} className="w-full">
           <TabsList className="grid grid-cols-4 w-full max-w-md mx-auto">
             <TabsTrigger value="wear" asChild>
               <Link href="/dashboard" className="flex items-center gap-2">
