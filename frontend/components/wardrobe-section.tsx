@@ -19,6 +19,8 @@ export function WardrobeSection() {
   const [newItem, setNewItem] = useState("")
   const [items, setItems] = useState<WardrobeItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
   const { toast } = useToast()
   const { isAuthenticated, login } = useAuth()
 
@@ -136,16 +138,43 @@ export function WardrobeSection() {
         {!Array.isArray(items) || items.length === 0 ? (
           <p className="text-gray-500 text-center py-4">Your wardrobe is empty. Add some items to get started.</p>
         ) : (
-          <ul className="space-y-2">
-            {items.map((item) => (
-              <li key={item.itemId} className="flex justify-between items-center p-2 border rounded-md">
-                <span>{item.description}</span>
-                <Button variant="ghost" size="icon" onClick={() => handleDeleteItem(item.itemId)}>
-                  <Trash2 className="h-4 w-4 text-gray-500" />
+          <>
+            <ul className="space-y-2">
+              {items
+                .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                .map((item) => (
+                  <li key={item.itemId} className="flex justify-between items-center p-2 border rounded-md">
+                    <span>{item.description}</span>
+                    <Button variant="ghost" size="icon" onClick={() => handleDeleteItem(item.itemId)}>
+                      <Trash2 className="h-4 w-4 text-gray-500" />
+                    </Button>
+                  </li>
+                ))}
+            </ul>
+            {items.length > itemsPerPage && (
+              <div className="flex justify-center items-center gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
                 </Button>
-              </li>
-            ))}
-          </ul>
+                <span className="text-sm text-gray-500">
+                  Page {currentPage} of {Math.ceil(items.length / itemsPerPage)}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(items.length / itemsPerPage)))}
+                  disabled={currentPage === Math.ceil(items.length / itemsPerPage)}
+                >
+                  Next
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
