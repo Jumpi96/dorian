@@ -29,8 +29,23 @@ def init_auth_routes(app, google):
 
         jwt_token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
         
-        frontend_redirect = f"{Config.FRONTEND_REDIRECT_SUCCESS}?token={jwt_token}"
-        return redirect(frontend_redirect)
+        response = redirect(Config.FRONTEND_REDIRECT_SUCCESS)
+        response.set_cookie(
+            'auth_token',
+            jwt_token,
+            httponly=True,
+            secure=True,
+            samesite='Lax',
+            max_age=JWT_EXP_DELTA_SECONDS
+        )
+        return response
+
+    @app.route('/auth/verify')
+    @requires_auth
+    def verify_token():
+        return jsonify({"status": "valid"}), 200
+
+    return app
 
 def requires_auth(f):
     @wraps(f)

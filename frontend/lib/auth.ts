@@ -4,7 +4,6 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  token: string | null;
   login: () => void;
   logout: () => void;
 }
@@ -12,34 +11,42 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Check for token in localStorage on mount
-    const storedToken = localStorage.getItem('auth_token');
-    if (storedToken) {
-      setToken(storedToken);
-      setIsAuthenticated(true);
-      // Set the auth header for all subsequent requests
-      document.cookie = `auth_token=${storedToken}; path=/`;
-    }
+    // Check if the auth_token cookie exists
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/check', {
+          credentials: 'include', // Important: This ensures cookies are sent
+        });
+        setIsAuthenticated(response.ok);
+      } catch (error) {
+        setIsAuthenticated(false);
+      }
+    };
+    
+    checkAuth();
   }, []);
 
   const login = () => {
     window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/login`;
   };
 
-  const logout = () => {
-    localStorage.removeItem('auth_token');
-    document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-    setToken(null);
-    setIsAuthenticated(false);
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } finally {
+      setIsAuthenticated(false);
+    }
   };
 
   return React.createElement(
     AuthContext.Provider,
-    { value: { isAuthenticated, token, login, logout } },
+    { value: { isAuthenticated, login, logout } },
     children
   );
 }
