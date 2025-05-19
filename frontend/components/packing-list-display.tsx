@@ -38,11 +38,19 @@ export function PackingListDisplay({ trip, onTripDeleted }: PackingListDisplayPr
       })
       onTripDeleted?.()
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete trip",
-        variant: "destructive",
-      })
+      if (error instanceof Error && error.name === 'APIError' && (error as any).status === 429) {
+        toast({
+          title: "Rate Limit Exceeded",
+          description: "You've reached your daily limit for trip operations. Please try again tomorrow.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to delete trip",
+          variant: "destructive",
+        })
+      }
     } finally {
       setIsDeleting(false)
     }

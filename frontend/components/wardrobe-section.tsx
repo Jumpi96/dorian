@@ -39,11 +39,19 @@ export function WardrobeSection() {
     } catch (error) {
       console.error('Error loading wardrobe items:', error)
       setItems([])
-      toast({
-        title: "Error",
-        description: "Failed to load wardrobe items.",
-        variant: "destructive",
-      })
+      if (error instanceof Error && error.name === 'APIError' && (error as any).status === 429) {
+        toast({
+          title: "Rate Limit Exceeded",
+          description: "You've reached your daily limit for wardrobe operations. Please try again tomorrow.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to load wardrobe items.",
+          variant: "destructive",
+        })
+      }
     }
   }
 

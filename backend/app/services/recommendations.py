@@ -1,6 +1,7 @@
 import logging
 from app.services.llm import LLMService
 from app.services.wardrobe import WardrobeService
+from app.services.rate_limit import RateLimitError
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ class RecommendationsService:
             
         Raises:
             InsufficientWardrobeError: If user has fewer than MIN_WARDROBE_ITEMS items
+            RateLimitError: If the user has exceeded their daily rate limit
             Exception: If there's an error getting the recommendation
         """
         try:
@@ -45,6 +47,9 @@ class RecommendationsService:
             
         except InsufficientWardrobeError:
             raise
+        except RateLimitError:
+            logger.error("Rate limit exceeded while getting outfit recommendation", exc_info=True)
+            raise
         except Exception as e:
             logger.error(f"Error getting outfit recommendation: {str(e)}", exc_info=True)
             raise
@@ -61,6 +66,7 @@ class RecommendationsService:
             dict: The outfit recommendation
             
         Raises:
+            RateLimitError: If the user has exceeded their daily rate limit
             Exception: If there's an error getting the recommendation
         """
         try:
@@ -77,6 +83,9 @@ class RecommendationsService:
             
             return self._generate_outfit_recommendation(wardrobe_items, situation, trip['userId'])
             
+        except RateLimitError:
+            logger.error("Rate limit exceeded while getting trip outfit recommendation", exc_info=True)
+            raise
         except Exception as e:
             logger.error(f"Error getting trip outfit recommendation: {str(e)}", exc_info=True)
             raise
@@ -92,10 +101,15 @@ class RecommendationsService:
             
         Returns:
             dict: The outfit recommendation
+            
+        Raises:
+            RateLimitError: If the user has exceeded their daily rate limit
+            Exception: If there's an error generating the recommendation
         """
-        # Construct the prompt
-        wardrobe_description = "\n".join([item["description"] for item in wardrobe_items])
-        prompt = f"""Given the following wardrobe items:
+        try:
+            # Construct the prompt
+            wardrobe_description = "\n".join([item["description"] for item in wardrobe_items])
+            prompt = f"""Given the following wardrobe items:
 {wardrobe_description}
 
 The user is in this situation: {situation}
@@ -109,8 +123,14 @@ Recommend an outfit using only items from their wardrobe. Format the response as
     "accessories": "description of accessories (optional)"
 }}"""
 
-        # Get recommendation from LLM
-        return self.llm_service.get_completion(prompt, user_id)
+            # Get recommendation from LLM
+            return self.llm_service.get_completion(prompt, user_id)
+        except RateLimitError:
+            logger.error("Rate limit exceeded while generating outfit recommendation", exc_info=True)
+            raise
+        except Exception as e:
+            logger.error(f"Error generating outfit recommendation: {str(e)}", exc_info=True)
+            raise
 
     def get_items_to_buy_recommendation(self, user_id: str, situation: str) -> dict:
         """
@@ -129,6 +149,7 @@ Recommend an outfit using only items from their wardrobe. Format the response as
         
         Raises:
             InsufficientWardrobeError: If user has fewer than MIN_WARDROBE_ITEMS items
+            RateLimitError: If the user has exceeded their daily rate limit
             Exception: If there's an error getting the recommendation
         """
         try:
@@ -160,6 +181,9 @@ Recommend ONE item they should buy to improve their wardrobe for this situation.
             
         except InsufficientWardrobeError:
             raise
+        except RateLimitError:
+            logger.error("Rate limit exceeded while getting items to buy recommendation", exc_info=True)
+            raise
         except Exception as e:
             logger.error(f"Error getting items to buy recommendation: {str(e)}", exc_info=True)
             raise 
@@ -184,6 +208,7 @@ Recommend ONE item they should buy to improve their wardrobe for this situation.
             
         Raises:
             InsufficientWardrobeError: If user has fewer than MIN_WARDROBE_ITEMS items
+            RateLimitError: If the user has exceeded their daily rate limit
             Exception: If there's an error getting the recommendation
         """
         try:
@@ -219,6 +244,9 @@ Each list should contain 2-3 items that would be appropriate for the trip."""
             return self.llm_service.get_completion(prompt, user_id)
             
         except InsufficientWardrobeError:
+            raise
+        except RateLimitError:
+            logger.error("Rate limit exceeded while getting packing recommendation", exc_info=True)
             raise
         except Exception as e:
             logger.error(f"Error getting packing recommendation: {str(e)}", exc_info=True)

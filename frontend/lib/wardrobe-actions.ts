@@ -3,6 +3,17 @@
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 
+class APIError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public type?: string
+  ) {
+    super(message)
+    this.name = 'APIError'
+  }
+}
+
 // In a real app, this would interact with a database
 export async function addWardrobeItem(description: string): Promise<string> {
   const cookieStore = await cookies()
@@ -22,7 +33,12 @@ export async function addWardrobeItem(description: string): Promise<string> {
   })
 
   if (!response.ok) {
-    throw new Error('Failed to add wardrobe item')
+    const error = await response.json()
+    throw new APIError(
+      error.message || 'Failed to add wardrobe item',
+      response.status,
+      error.type
+    )
   }
 
   const data = await response.json()
@@ -46,7 +62,12 @@ export async function deleteWardrobeItem(itemId: string): Promise<void> {
   })
 
   if (!response.ok) {
-    throw new Error('Failed to delete wardrobe item')
+    const error = await response.json()
+    throw new APIError(
+      error.message || 'Failed to delete wardrobe item',
+      response.status,
+      error.type
+    )
   }
 
   revalidatePath('/dashboard')
@@ -67,7 +88,12 @@ export async function getWardrobeItems() {
   })
 
   if (!response.ok) {
-    throw new Error('Failed to fetch wardrobe items')
+    const error = await response.json()
+    throw new APIError(
+      error.message || 'Failed to fetch wardrobe items',
+      response.status,
+      error.type
+    )
   }
 
   return response.json()

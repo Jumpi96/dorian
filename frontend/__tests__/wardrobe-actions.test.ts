@@ -56,7 +56,8 @@ describe('Wardrobe Actions', () => {
 
     it('should throw error when API call fails', async () => {
       ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false
+        ok: false,
+        json: () => Promise.resolve({ message: 'Failed to add wardrobe item' })
       })
 
       await expect(addWardrobeItem('Test item')).rejects.toThrow('Failed to add wardrobe item')
@@ -88,7 +89,8 @@ describe('Wardrobe Actions', () => {
 
     it('should throw error when API call fails', async () => {
       ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false
+        ok: false,
+        json: () => Promise.resolve({ message: 'Failed to delete wardrobe item' })
       })
 
       await expect(deleteWardrobeItem('123')).rejects.toThrow('Failed to delete wardrobe item')
@@ -121,7 +123,8 @@ describe('Wardrobe Actions', () => {
 
     it('should throw error when API call fails', async () => {
       ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false
+        ok: false,
+        json: () => Promise.resolve({ message: 'Failed to fetch wardrobe items' })
       })
 
       await expect(getWardrobeItems()).rejects.toThrow('Failed to fetch wardrobe items')

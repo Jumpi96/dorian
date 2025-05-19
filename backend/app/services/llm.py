@@ -46,7 +46,9 @@ class LLMService:
             except json.JSONDecodeError as e:
                 logger.error(f"Error parsing JSON response: {str(e)}", exc_info=True)
                 raise Exception(f"Failed to parse JSON response: {str(e)}")
-            
+        except RateLimitError as e:
+            logger.error(f"Rate limit exceeded: {str(e)}", exc_info=True)
+            raise e
         except Exception as e:
             logger.error(f"Error calling OpenAI API: {str(e)}", exc_info=True)
             raise Exception(f"Failed to get completion from OpenAI: {str(e)}") 

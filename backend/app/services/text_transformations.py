@@ -1,5 +1,6 @@
 import logging
 from app.services.llm import LLMService
+from app.services.rate_limit import RateLimitError
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ class TextTransformationsService:
             str: A clean, concise title for the trip
             
         Raises:
+            RateLimitError: If the user has exceeded their daily rate limit
             Exception: If there's an error generating the title
         """
         try:
@@ -37,6 +39,9 @@ Return the response as a JSON object with a single field 'title' containing the 
             
             return title
             
+        except RateLimitError:
+            logger.error("Rate limit exceeded while generating trip title", exc_info=True)
+            raise
         except Exception as e:
             logger.error(f"Error generating trip title: {str(e)}", exc_info=True)
             raise 

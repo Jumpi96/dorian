@@ -5,6 +5,7 @@ from app.services.recommendations import RecommendationsService, InsufficientWar
 from app.services.interactions import InteractionsService
 from app.services.trips import TripsService
 from app.services.text_transformations import TextTransformationsService
+from app.services.rate_limit import RateLimitError
 from app.routes.auth import requires_auth
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,12 @@ def init_recommendation_routes(app, recommendations_service: RecommendationsServ
                 "type": "insufficient_wardrobe",
                 "message": "Please add more items to your wardrobe before requesting recommendations."
             }), 400
+        except RateLimitError as e:
+            return jsonify({
+                "error": str(e),
+                "type": "rate_limit",
+                "message": "You have exceeded your daily request limit. Please try again tomorrow."
+            }), 429
         except Exception as e:
             logger.error(f"Error in outfit recommendation: {str(e)}", exc_info=True)
             return jsonify({"error": str(e)}), 500
@@ -93,6 +100,12 @@ def init_recommendation_routes(app, recommendations_service: RecommendationsServ
                 "type": "insufficient_wardrobe",
                 "message": "Please add more items to your wardrobe before requesting recommendations."
             }), 400
+        except RateLimitError as e:
+            return jsonify({
+                "error": str(e),
+                "type": "rate_limit",
+                "message": "You have exceeded your daily request limit. Please try again tomorrow."
+            }), 429
         except Exception as e:
             logger.error(f"Error in trip outfit recommendation: {str(e)}", exc_info=True)
             return jsonify({"error": str(e)}), 500
@@ -132,6 +145,12 @@ def init_recommendation_routes(app, recommendations_service: RecommendationsServ
                 "type": "insufficient_wardrobe",
                 "message": "Please add more items to your wardrobe before requesting recommendations."
             }), 400
+        except RateLimitError as e:
+            return jsonify({
+                "error": str(e),
+                "type": "rate_limit",
+                "message": "You have exceeded your daily request limit. Please try again tomorrow."
+            }), 429
         except Exception as e:
             logger.error(f"Error in purchase recommendation: {str(e)}", exc_info=True)
             return jsonify({"error": str(e)}), 500
@@ -182,6 +201,12 @@ def init_recommendation_routes(app, recommendations_service: RecommendationsServ
                 "type": "insufficient_wardrobe",
                 "message": "Please add more items to your wardrobe before requesting recommendations."
             }), 400
+        except RateLimitError as e:
+            return jsonify({
+                "error": str(e),
+                "type": "rate_limit",
+                "message": "You have exceeded your daily request limit. Please try again tomorrow."
+            }), 429
         except Exception as e:
             logger.error(f"Error in packing list recommendation: {str(e)}", exc_info=True)
             return jsonify({"error": str(e)}), 500

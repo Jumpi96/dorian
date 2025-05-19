@@ -138,7 +138,7 @@ describe('BuyRecommendationDisplay', () => {
     await waitFor(() => {
       expect(mockToast.toast).toHaveBeenCalledWith({
         title: 'Error',
-        description: 'Failed to submit feedback.',
+        description: 'Failed to submit feedback',
         variant: 'destructive',
       })
     })

@@ -31,11 +31,19 @@ export function BuyRecommendationDisplay({ situation }: BuyRecommendationDisplay
         setRecommendation(data.item_to_buy);
         setInteractionId(data.interaction_id);
       } catch (error) {
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to fetch purchase recommendation",
-          variant: "destructive",
-        });
+        if (error instanceof Error && error.name === 'APIError' && (error as any).status === 429) {
+          toast({
+            title: "Rate Limit Exceeded",
+            description: "You've reached your daily limit for recommendations. Please try again tomorrow.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: error instanceof Error ? error.message : "Failed to fetch purchase recommendation",
+            variant: "destructive",
+          });
+        }
       } finally {
         setIsLoading(false);
       }

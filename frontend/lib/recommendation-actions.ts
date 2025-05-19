@@ -5,6 +5,17 @@ import { cookies } from "next/headers"
 
 type RecommendationMode = "wear" | "pack" | "buy"
 
+class APIError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public type?: string
+  ) {
+    super(message)
+    this.name = 'APIError'
+  }
+}
+
 // In a real app, this would interact with a database and LLM API
 export async function getRecommendation(mode: RecommendationMode, prompt: string, tripId?: string) {
   const cookieStore = await cookies()
@@ -27,7 +38,11 @@ export async function getRecommendation(mode: RecommendationMode, prompt: string
 
   if (!response.ok) {
     const error = await response.json()
-    throw new Error(error.message || 'Failed to get recommendation')
+    throw new APIError(
+      error.message || 'Failed to get recommendation',
+      response.status,
+      error.type
+    )
   }
 
   const data = await response.json()
@@ -51,7 +66,12 @@ async function getWardrobeItems() {
   })
 
   if (!response.ok) {
-    throw new Error('Failed to fetch wardrobe items')
+    const error = await response.json()
+    throw new APIError(
+      error.message || 'Failed to fetch wardrobe items',
+      response.status,
+      error.type
+    )
   }
 
   return response.json()

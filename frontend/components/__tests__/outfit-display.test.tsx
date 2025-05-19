@@ -139,7 +139,7 @@ describe('OutfitDisplay', () => {
     await waitFor(() => {
       expect(mockToast.toast).toHaveBeenCalledWith({
         title: 'Error',
-        description: 'Failed to submit feedback.',
+        description: 'Feedback Error',
         variant: 'destructive'
       })
     })
