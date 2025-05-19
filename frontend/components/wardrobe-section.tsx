@@ -20,7 +20,7 @@ export function WardrobeSection() {
   const [items, setItems] = useState<WardrobeItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
+  const itemsPerPage = 5
   const { toast } = useToast()
   const { isAuthenticated, login } = useAuth()
 
