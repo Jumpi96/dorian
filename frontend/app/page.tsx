@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ArrowRight, Shirt, LuggageIcon as Suitcase, ShoppingBag } from "lucide-react"
 import { GoogleSignInButton } from "@/components/google-signin-button"
 import { useAuth } from "@/lib/auth"
+import Image from "next/image"
 
 export default function Home() {
   const { isAuthenticated, logout } = useAuth();
@@ -13,7 +14,10 @@ export default function Home() {
     <div className="flex flex-col min-h-screen">
       <header className="border-b">
         <div className="container flex justify-between items-center py-4">
-          <h1 className="text-2xl font-bold">Dorian</h1>
+          <div className="flex items-center gap-2">
+            <Image src="/logo.svg" alt="Dorian Logo" width={64} height={64} />
+            <h1 className="text-2xl font-bold">Dorian</h1>
+          </div>
           <div className="flex gap-4">
             {isAuthenticated ? (
               <>

@@ -11,7 +11,10 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Dorian - Your Wardrobe Assistant",
   description: "Manage your wardrobe and get outfit recommendations",
-    generator: 'v0.dev'
+  generator: 'v0.dev',
+  icons: {
+    icon: '/logo.svg',
+  }
 }
 
 export default function RootLayout({

@@ -7,6 +7,7 @@ import { Shirt, LuggageIcon as Suitcase, ShoppingBag, History, User } from "luci
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth"
 import { useRouter, usePathname } from "next/navigation"
+import Image from "next/image"
 
 export default function DashboardLayout({
   children,
@@ -34,7 +35,8 @@ export default function DashboardLayout({
     <div className="flex flex-col min-h-screen">
       <header className="border-b">
         <div className="container flex justify-between items-center py-4">
-          <Link href="/dashboard" className="text-2xl font-bold">
+          <Link href="/dashboard" className="flex items-center gap-2 text-2xl font-bold">
+            <Image src="/logo.svg" alt="Dorian Logo" width={64} height={64} />
             Dorian
           </Link>
           <div className="flex items-center gap-2">
