@@ -40,8 +40,8 @@ def test_callback_endpoint_success(client):
     test_client, mock_google = client
     response = test_client.get('/auth/callback', follow_redirects=False)
 
-    # Validate redirect URL and token presence
+    # Validate redirect URL and cookie presence
     assert response.status_code == 302
     assert response.location.startswith(Config.FRONTEND_REDIRECT_SUCCESS)
-    assert 'token=' in response.location
+    assert 'auth_token' in response.headers.get('Set-Cookie', '')
 
