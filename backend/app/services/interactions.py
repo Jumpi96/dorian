@@ -128,7 +128,7 @@ class InteractionsService:
             user_id (str): The user's ID
             
         Returns:
-            list: List of user interactions
+            list: List of user interactions sorted by creation date (newest first)
             
         Raises:
             DynamoDBError: If there's an error querying DynamoDB
@@ -137,11 +137,14 @@ class InteractionsService:
             response = self.dynamodb.query(
                 table_name=self.table_name,
                 key_condition_expression="userId = :user_id",
-                expression_attribute_values={":user_id": user_id},
-                scan_index_forward=False  # This will sort in descending order
+                expression_attribute_values={":user_id": user_id}
             )
             
-            return response.get('Items', [])
+            # Sort items by createdAt in descending order
+            items = response.get('Items', [])
+            items.sort(key=lambda x: x.get('createdAt', ''), reverse=True)
+            
+            return items
         except DynamoDBError as e:
             logger.error(f"Error getting user interactions: {str(e)}", exc_info=True)
             raise
