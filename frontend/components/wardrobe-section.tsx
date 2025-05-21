@@ -4,11 +4,14 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Plus, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { addWardrobeItem, deleteWardrobeItem, getWardrobeItems } from "@/lib/wardrobe-actions"
 import { useAuth } from "@/lib/auth"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 
 interface WardrobeItem {
   itemId: string
@@ -17,6 +20,7 @@ interface WardrobeItem {
 
 export function WardrobeSection() {
   const [newItem, setNewItem] = useState("")
+  const [isMultipleMode, setIsMultipleMode] = useState(false)
   const [items, setItems] = useState<WardrobeItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
@@ -66,18 +70,34 @@ export function WardrobeSection() {
 
     setIsLoading(true)
     try {
-      const itemId = await addWardrobeItem(newItem)
-      setItems(prevItems => [...prevItems, { itemId, description: newItem }])
+      if (isMultipleMode) {
+        const items = newItem.split('\n').filter(item => item.trim())
+        const addedItems: WardrobeItem[] = []
+        
+        for (const item of items) {
+          const itemId = await addWardrobeItem(item)
+          addedItems.push({ itemId, description: item })
+        }
+        
+        setItems(prevItems => [...prevItems, ...addedItems])
+        toast({
+          title: "Items added",
+          description: `Added ${addedItems.length} item${addedItems.length > 1 ? 's' : ''} to your wardrobe.`,
+        })
+      } else {
+        const itemId = await addWardrobeItem(newItem)
+        setItems(prevItems => [...prevItems, { itemId, description: newItem }])
+        toast({
+          title: "Item added",
+          description: `${newItem} has been added to your wardrobe.`,
+        })
+      }
       setNewItem("")
-      toast({
-        title: "Item added",
-        description: `${newItem} has been added to your wardrobe.`,
-      })
     } catch (error) {
-      console.error('Error adding item:', error)
+      console.error('Error adding item(s):', error)
       toast({
         title: "Error",
-        description: "Failed to add item to your wardrobe.",
+        description: `Failed to add ${isMultipleMode ? 'items' : 'item'} to your wardrobe.`,
         variant: "destructive",
       })
     } finally {
@@ -132,15 +152,35 @@ export function WardrobeSection() {
         <CardTitle>My Wardrobe</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleAddItem} className="flex gap-2 mb-4">
-          <Input
-            placeholder="Add a clothing item (e.g., brown sweatshirt)"
-            value={newItem}
-            onChange={(e) => setNewItem(e.target.value)}
-          />
-          <Button type="submit" size="icon" disabled={isLoading}>
-            <Plus className="h-4 w-4" />
-          </Button>
+        <form onSubmit={handleAddItem} className="flex flex-col gap-2 mb-4">
+          {isMultipleMode ? (
+            <Textarea
+              placeholder="Add clothing items (one per line)"
+              value={newItem}
+              onChange={(e) => setNewItem(e.target.value)}
+              className="min-h-[100px]"
+            />
+          ) : (
+            <Input
+              placeholder="Add a clothing item (e.g., brown sweatshirt)"
+              value={newItem}
+              onChange={(e) => setNewItem(e.target.value)}
+            />
+          )}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="multiple-mode"
+                checked={isMultipleMode}
+                onCheckedChange={setIsMultipleMode}
+              />
+              <Label htmlFor="multiple-mode">Multiple</Label>
+            </div>
+            <Button type="submit" size={isMultipleMode ? "default" : "icon"} disabled={isLoading}>
+              <Plus className="h-4 w-4" />
+              {isMultipleMode && <span className="ml-2">Add Items</span>}
+            </Button>
+          </div>
         </form>
 
         {!Array.isArray(items) || items.length === 0 ? (
