@@ -76,10 +76,10 @@ describe('WardrobeSection', () => {
     render(<WardrobeSection />)
 
     const input = screen.getByPlaceholderText('Add a clothing item (e.g., brown sweatshirt)')
-    const addButton = screen.getByRole('button', { name: '' }) // The Plus icon button
+    const form = input.closest('form')!
 
     fireEvent.change(input, { target: { value: 'New item' } })
-    fireEvent.click(addButton)
+    fireEvent.submit(form)
 
     await waitFor(() => {
       expect(addWardrobeItem).toHaveBeenCalledWith('New item')
@@ -122,10 +122,10 @@ describe('WardrobeSection', () => {
     render(<WardrobeSection />)
 
     const input = screen.getByPlaceholderText('Add a clothing item (e.g., brown sweatshirt)')
-    const addButton = screen.getByRole('button', { name: '' })
+    const form = input.closest('form')!
 
     fireEvent.change(input, { target: { value: 'New item' } })
-    fireEvent.click(addButton)
+    fireEvent.submit(form)
 
     await waitFor(() => {
       expect(consoleError).toHaveBeenCalled()

@@ -24,6 +24,14 @@ global.Response = class Response {
   }
 }
 
+// Mock ResizeObserver
+class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+global.ResizeObserver = ResizeObserver
+
 // Mock next/headers
 jest.mock('next/headers', () => ({
   cookies: jest.fn().mockReturnValue({
