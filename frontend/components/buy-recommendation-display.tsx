@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ThumbsUp, ThumbsDown } from "lucide-react"
@@ -10,21 +10,30 @@ import { getRecommendation } from "@/lib/recommendation-actions"
 
 interface BuyRecommendationDisplayProps {
   situation?: string;
+  initialData?: {
+    item_to_buy: {
+      item: string;
+      explanation: string;
+    };
+    interaction_id: string;
+  };
 }
 
-export function BuyRecommendationDisplay({ situation }: BuyRecommendationDisplayProps) {
-  const [recommendation, setRecommendation] = useState<{ item: string; explanation: string } | null>(null)
-  const [interactionId, setInteractionId] = useState<string | null>(null)
+export function BuyRecommendationDisplay({ situation, initialData }: BuyRecommendationDisplayProps) {
+  const [recommendation, setRecommendation] = useState<{ item: string; explanation: string } | null>(initialData?.item_to_buy || null)
+  const [interactionId, setInteractionId] = useState<string | null>(initialData?.interaction_id || null)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
   const [selectedFeedback, setSelectedFeedback] = useState<"thumbsUp" | "thumbsDown" | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
   const { toast } = useToast()
+  const requestInProgress = useRef(false)
 
   useEffect(() => {
     const fetchRecommendation = async () => {
-      if (!situation) return;
+      if (!situation || requestInProgress.current || initialData) return;
       
+      requestInProgress.current = true;
       setIsLoading(true);
       try {
         const data = await getRecommendation("buy", situation);
@@ -46,11 +55,20 @@ export function BuyRecommendationDisplay({ situation }: BuyRecommendationDisplay
         }
       } finally {
         setIsLoading(false);
+        requestInProgress.current = false;
       }
     };
 
     fetchRecommendation();
-  }, [situation, toast]);
+  }, [situation, initialData]);
+
+  // Update state when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      setRecommendation(initialData.item_to_buy);
+      setInteractionId(initialData.interaction_id);
+    }
+  }, [initialData]);
 
   const handleFeedback = async (type: "thumbsUp" | "thumbsDown") => {
     if (!interactionId || isSubmittingFeedback) return;

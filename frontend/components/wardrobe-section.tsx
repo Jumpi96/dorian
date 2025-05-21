@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -27,14 +27,19 @@ export function WardrobeSection() {
   const itemsPerPage = 5
   const { toast } = useToast()
   const { isAuthenticated, login } = useAuth()
+  const initialLoadDone = useRef(false)
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !initialLoadDone.current) {
+      initialLoadDone.current = true
       loadWardrobeItems()
     }
   }, [isAuthenticated])
 
   const loadWardrobeItems = async () => {
+    if (isLoading) return // Prevent duplicate calls
+    
+    setIsLoading(true)
     try {
       const response = await getWardrobeItems()
       // Ensure we have an array of items
@@ -56,6 +61,8 @@ export function WardrobeSection() {
           variant: "destructive",
         })
       }
+    } finally {
+      setIsLoading(false)
     }
   }
 

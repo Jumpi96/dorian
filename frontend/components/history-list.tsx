@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Interaction } from "@/lib/types"
 import { getInteractions } from "@/lib/interaction-actions"
 import { format } from "date-fns"
@@ -17,8 +17,12 @@ export function HistoryList() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
   const { toast } = useToast()
+  const initialLoadDone = useRef(false)
 
   useEffect(() => {
+    if (initialLoadDone.current) return
+    initialLoadDone.current = true
+
     const fetchInteractions = async () => {
       try {
         const data = await getInteractions()
@@ -35,7 +39,7 @@ export function HistoryList() {
     }
 
     fetchInteractions()
-  }, [toast])
+  }, [])
 
   const getBadgeVariant = (type: string): "default" | "secondary" | "outline" => {
     switch (type) {

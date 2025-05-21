@@ -12,7 +12,7 @@ type RecommendationMode = "wear" | "pack" | "buy"
 
 interface RecommendationFormProps {
   mode: RecommendationMode;
-  onSituationChange?: (situation: string) => void;
+  onSituationChange?: (situation: string, data?: { outfit: Record<string, string>, interaction_id: string }) => void;
   tripId?: string;
   onTripCreated?: () => void;
 }
@@ -44,7 +44,7 @@ export function RecommendationForm({ mode, onSituationChange, tripId, onTripCrea
       
       // Only trigger outfit recommendation for wear and buy modes
       if (mode !== "pack") {
-        onSituationChange?.(prompt.trim())
+        onSituationChange?.(prompt.trim(), data)
       }
       
       // If this was a pack recommendation, we need to refresh the trip data

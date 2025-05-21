@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { RecommendationForm } from "@/components/recommendation-form"
 import { PackingListDisplay } from "@/components/packing-list-display"
 import { OutfitDisplay } from "@/components/outfit-display"
@@ -25,6 +25,7 @@ export default function PackPage() {
   const [trip, setTrip] = useState<Trip | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
+  const initialLoadDone = useRef(false)
 
   const fetchTrip = async () => {
     try {
@@ -42,8 +43,10 @@ export default function PackPage() {
   }
 
   useEffect(() => {
+    if (initialLoadDone.current) return
+    initialLoadDone.current = true
     fetchTrip()
-  }, [toast])
+  }, [])
 
   if (isLoading) {
     return (

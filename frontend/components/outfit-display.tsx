@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ThumbsUp, ThumbsDown } from "lucide-react"
@@ -11,21 +11,27 @@ import { getRecommendation } from "@/lib/recommendation-actions"
 interface OutfitDisplayProps {
   situation?: string;
   tripId?: string;
+  initialData?: {
+    outfit: Record<string, string>;
+    interaction_id: string;
+  };
 }
 
-export function OutfitDisplay({ situation, tripId }: OutfitDisplayProps) {
-  const [outfit, setOutfit] = useState<Record<string, string> | null>(null)
-  const [interactionId, setInteractionId] = useState<string | null>(null)
+export function OutfitDisplay({ situation, tripId, initialData }: OutfitDisplayProps) {
+  const [outfit, setOutfit] = useState<Record<string, string> | null>(initialData?.outfit || null)
+  const [interactionId, setInteractionId] = useState<string | null>(initialData?.interaction_id || null)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
   const [selectedFeedback, setSelectedFeedback] = useState<"thumbsUp" | "thumbsDown" | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
   const { toast } = useToast()
+  const requestInProgress = useRef(false)
 
   useEffect(() => {
     const fetchOutfit = async () => {
-      if (!situation) return;
+      if (!situation || requestInProgress.current || initialData) return;
       
+      requestInProgress.current = true;
       setIsLoading(true);
       try {
         const data = await getRecommendation("wear", situation, tripId);
@@ -39,11 +45,20 @@ export function OutfitDisplay({ situation, tripId }: OutfitDisplayProps) {
         });
       } finally {
         setIsLoading(false);
+        requestInProgress.current = false;
       }
     };
 
     fetchOutfit();
-  }, [situation, tripId, toast]);
+  }, [situation, tripId, initialData]);
+
+  // Update state when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      setOutfit(initialData.outfit);
+      setInteractionId(initialData.interaction_id);
+    }
+  }, [initialData]);
 
   const handleFeedback = async (type: "thumbsUp" | "thumbsDown") => {
     if (!interactionId || isSubmittingFeedback) return;
