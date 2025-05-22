@@ -1,7 +1,7 @@
 import jwt
 from flask import request, url_for, redirect, jsonify
 from functools import wraps
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta, timezone
 from app.config import Config
 
 JWT_SECRET = Config.JWT_SECRET_KEY
@@ -24,7 +24,7 @@ def init_auth_routes(app, google):
             'sub': user_info['id'],
             'email': user_info['email'],
             'name': user_info.get('name'),
-            'exp': datetime.now(UTC) + timedelta(seconds=JWT_EXP_DELTA_SECONDS)
+            'exp': datetime.now(timezone.utc) + timedelta(seconds=JWT_EXP_DELTA_SECONDS)
         }
 
         jwt_token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)

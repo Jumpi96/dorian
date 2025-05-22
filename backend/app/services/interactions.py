@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from app.clients.dynamodb import DynamoDBClient, DynamoDBError
 from app.config import Config
 
@@ -28,7 +28,7 @@ class InteractionsService:
             DynamoDBError: If there's an error saving to DynamoDB
         """
         try:
-            timestamp = datetime.now(UTC).isoformat()
+            timestamp = datetime.now(timezone.utc).isoformat()
             interaction_id = f"rec_{timestamp}"
             self.dynamodb.put_item(
                 table_name=self.table_name,
@@ -64,7 +64,7 @@ class InteractionsService:
             DynamoDBError: If there's an error saving to DynamoDB
         """
         try:
-            timestamp = datetime.now(UTC).isoformat()
+            timestamp = datetime.now(timezone.utc).isoformat()
             interaction_id = f"buy_{timestamp}"
             self.dynamodb.put_item(
                 table_name=self.table_name,
@@ -98,7 +98,7 @@ class InteractionsService:
             DynamoDBError: If there's an error saving to DynamoDB
         """
         try:
-            timestamp = datetime.now(UTC).isoformat()
+            timestamp = datetime.now(timezone.utc).isoformat()
             trip_id = f"trip_{timestamp}"
             
             self.dynamodb.put_item(

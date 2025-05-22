@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from app.clients.dynamodb import DynamoDBClient, DynamoDBError
 from app.config import Config
 
@@ -33,7 +33,7 @@ class WardrobeService:
                     'userId': user_id,
                     'itemId': item_id,
                     'description': description,
-                    'createdAt': datetime.now(UTC).isoformat()
+                    'createdAt': datetime.now(timezone.utc).isoformat()
                 }
             )
         except DynamoDBError as e:
