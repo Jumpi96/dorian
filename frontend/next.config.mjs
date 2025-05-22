@@ -11,6 +11,9 @@ const nextConfig = {
     unoptimized: true,
   },
   trailingSlash: true,
+  telemetry: {
+    disabled: true,
+  },
 }
 
 export default nextConfig

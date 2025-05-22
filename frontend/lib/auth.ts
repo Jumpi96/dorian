@@ -57,4 +57,28 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+}
+
+export async function checkAuth() {
+  const token = document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1];
+  
+  if (!token) {
+    return false;
+  }
+
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/verify`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+}
+
+export async function getAuthStatus() {
+  return await checkAuth();
 } 
