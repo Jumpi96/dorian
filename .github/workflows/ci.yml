@@ -2,9 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main, deployment ]
   pull_request:
-    branches: [ main, deployment ]
 
 jobs:
   frontend:
@@ -82,7 +80,7 @@ jobs:
       run: terraform fmt -check
 
     - name: Terraform Init
-      run: terraform init
+      run: terraform init -reconfigure
 
     - name: Terraform Validate
       run: terraform validate
@@ -91,4 +89,5 @@ jobs:
       run: terraform plan -var="environment=dev" -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" -var="jwt_secret_key=${{ secrets.JWT_SECRET_KEY }}" -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}"
 
     - name: Terraform Apply
+      if: github.ref == 'refs/heads/main'
       run: terraform apply -var="environment=dev" -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" -var="jwt_secret_key=${{ secrets.JWT_SECRET_KEY }}" -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}" -auto-approve
