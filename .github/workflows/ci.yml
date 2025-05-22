@@ -58,6 +58,8 @@ jobs:
     - name: Build Lambda package
       run: |
         mkdir -p package
+        pip install --platform manylinux2014_x86_64 --target=./package --implementation cp --python-version 3.9 --only-binary=:all: --upgrade pip setuptools wheel
+        pip install --platform manylinux2014_x86_64 --target=./package --implementation cp --python-version 3.9 --only-binary=:all: --upgrade exceptiongroup
         pip install --platform manylinux2014_x86_64 --target=./package --implementation cp --python-version 3.9 --only-binary=:all: --upgrade -r requirements.txt
         cp -r app package/
         cd package
