@@ -1,6 +1,6 @@
 resource "aws_lambda_function" "app" {
   s3_bucket         = "dorian-terraform-state"
-  s3_key            = "lambda_deployment.zip"
+  s3_key            = var.lambda_package_key
   function_name    = "dorian-backend"
   role            = aws_iam_role.lambda_role.arn
   handler         = "app.lambda_handler.handler"
