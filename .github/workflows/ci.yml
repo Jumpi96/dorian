@@ -55,6 +55,15 @@ jobs:
       env:
         JWT_SECRET_KEY: test-secret
 
+    - name: Build Lambda package
+      run: |
+        mkdir -p package
+        pip install --platform manylinux2014_x86_64 --target=./package --implementation cp --python-version 3.9 --only-binary=:all: --upgrade -r requirements.txt
+        cp -r app package/
+        cd package
+        zip -r ../lambda_deployment.zip .
+        cd ..
+
   terraform:
     runs-on: ubuntu-latest
     defaults:

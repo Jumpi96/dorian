@@ -1,12 +1,11 @@
 resource "aws_lambda_function" "app" {
-  filename         = data.archive_file.lambda_zip.output_path
+  filename         = "${path.root}/../backend/lambda_deployment.zip"
   function_name    = "dorian-backend"
   role            = aws_iam_role.lambda_role.arn
   handler         = "app.lambda_handler.handler"
-  runtime         = "python3.11"
+  runtime         = "python3.9"
   timeout         = 30
   memory_size     = 512
-  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 
   environment {
     variables = {
@@ -16,28 +15,6 @@ resource "aws_lambda_function" "app" {
       OPENAI_API_KEY       = var.openai_api_key
     }
   }
-}
-
-resource "null_resource" "install_dependencies" {
-  triggers = {
-    requirements = filemd5("${path.root}/../backend/requirements.txt")
-  }
-
-  provisioner "local-exec" {
-    command = <<EOF
-      cd ${path.root}/../backend
-      pip3 install -r requirements.txt -t .
-    EOF
-  }
-}
-
-data "archive_file" "lambda_zip" {
-  depends_on = [null_resource.install_dependencies]
-  
-  type        = "zip"
-  source_dir  = "${path.root}/../backend"
-  output_path = "${path.module}/lambda_function.zip"
-  excludes    = ["__pycache__", "*.pyc", "tests", ".pytest_cache", "htmlcov", ".coverage"]
 }
 
 resource "aws_iam_role" "lambda_role" {
