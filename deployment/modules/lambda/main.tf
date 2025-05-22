@@ -3,7 +3,7 @@ resource "aws_lambda_function" "app" {
   s3_key            = var.lambda_package_key
   function_name    = "dorian-backend"
   role            = aws_iam_role.lambda_role.arn
-  handler         = "app.lambda_handler.handler"
+  handler         = "lambda_handler.handler"
   runtime         = "python3.9"
   timeout         = 30
   memory_size     = 512
