@@ -76,6 +76,7 @@ jobs:
         aws s3 cp lambda_deployment.zip s3://dorian-terraform-state/lambda_deployment.zip
 
   terraform:
+    needs: [frontend, backend]
     runs-on: ubuntu-latest
     defaults:
       run:
