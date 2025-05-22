@@ -1,5 +1,7 @@
 from app import create_app
-from mangum import Mangum
+from awsgi import response
 
 app = create_app()
-handler = Mangum(app, lifespan="off") 
+
+def handler(event, context):
+    return response(app, event, context) 
