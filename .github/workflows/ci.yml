@@ -64,6 +64,17 @@ jobs:
         zip -r ../lambda_deployment.zip .
         cd ..
 
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-central-1
+
+    - name: Upload Lambda package to S3
+      run: |
+        aws s3 cp lambda_deployment.zip s3://dorian-terraform-state/lambda_deployment.zip
+
   terraform:
     runs-on: ubuntu-latest
     defaults:
