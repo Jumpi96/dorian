@@ -34,6 +34,8 @@ jobs:
     defaults:
       run:
         working-directory: ./backend
+    outputs:
+      lambda_package_key: ${{ steps.set-output.outputs.lambda_package_key }}
 
     steps:
     - uses: actions/checkout@v4
@@ -74,10 +76,12 @@ jobs:
         aws-region: eu-central-1
 
     - name: Upload Lambda package to S3
+      id: set-output
       run: |
         TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-        aws s3 cp lambda_deployment.zip s3://dorian-terraform-state/lambda_deployment_${TIMESTAMP}.zip
-        echo "LAMBDA_PACKAGE_KEY=lambda_deployment_${TIMESTAMP}.zip" >> $GITHUB_ENV
+        PACKAGE_KEY="lambda_deployment_${TIMESTAMP}.zip"
+        aws s3 cp lambda_deployment.zip s3://dorian-terraform-state/${PACKAGE_KEY}
+        echo "lambda_package_key=${PACKAGE_KEY}" >> $GITHUB_OUTPUT
 
   terraform:
     needs: [frontend, backend]
@@ -111,8 +115,8 @@ jobs:
       run: terraform validate
 
     - name: Terraform Plan
-      run: terraform plan -var="environment=dev" -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" -var="jwt_secret_key=${{ secrets.JWT_SECRET_KEY }}" -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}" -var="lambda_package_key=${{ needs.backend.outputs.LAMBDA_PACKAGE_KEY }}"
+      run: terraform plan -var="environment=dev" -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" -var="jwt_secret_key=${{ secrets.JWT_SECRET_KEY }}" -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}" -var="lambda_package_key=${{ needs.backend.outputs.lambda_package_key }}"
 
     - name: Terraform Apply
       #if: github.ref == 'refs/heads/main'
-      run: terraform apply -var="environment=dev" -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" -var="jwt_secret_key=${{ secrets.JWT_SECRET_KEY }}" -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}" -var="lambda_package_key=${{ needs.backend.outputs.LAMBDA_PACKAGE_KEY }}" -auto-approve
+      run: terraform apply -var="environment=dev" -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" -var="jwt_secret_key=${{ secrets.JWT_SECRET_KEY }}" -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}" -var="lambda_package_key=${{ needs.backend.outputs.lambda_package_key }}" -auto-approve
