@@ -34,6 +34,21 @@ jobs:
       env:
         NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
 
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-central-1
+
+    - name: Deploy to S3
+      run: |
+        aws s3 sync ./out s3://dorian-frontend --delete
+
+    - name: Invalidate CloudFront
+      run: |
+        aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+
   backend:
     runs-on: ubuntu-latest
     defaults:
@@ -88,7 +103,7 @@ jobs:
         aws s3 cp lambda_deployment.zip s3://dorian-terraform-state/${PACKAGE_KEY}
         echo "lambda_package_key=${PACKAGE_KEY}" >> $GITHUB_OUTPUT
 
-  deployment:
+  terraform:
     needs: [frontend, backend]
     runs-on: ubuntu-latest
     defaults:
@@ -123,15 +138,5 @@ jobs:
       run: terraform plan -var="environment=dev" -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" -var="jwt_secret_key=${{ secrets.JWT_SECRET_KEY }}" -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}" -var="lambda_package_key=${{ needs.backend.outputs.lambda_package_key }}"
 
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/main'
+      #if: github.ref == 'refs/heads/main'
       run: terraform apply -var="environment=dev" -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" -var="jwt_secret_key=${{ secrets.JWT_SECRET_KEY }}" -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}" -var="lambda_package_key=${{ needs.backend.outputs.lambda_package_key }}" -auto-approve
-
-    - name: Deploy Frontend to S3
-      if: github.ref == 'refs/heads/main'
-      run: |
-        aws s3 sync ../frontend/out s3://dorian-frontend --delete
-
-    - name: Invalidate CloudFront
-      if: github.ref == 'refs/heads/main'
-      run: |
-        aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
