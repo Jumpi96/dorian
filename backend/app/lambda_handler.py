@@ -3,16 +3,20 @@ from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_powertools.utilities.data_classes import APIGatewayProxyEvent
 from aws_lambda_powertools.utilities.parser import parse, BaseModel
 from aws_lambda_powertools.utilities.parser.models import APIGatewayProxyEventModel
+from urllib.parse import urlencode
 
 app = create_app()
 
 def handler(event: dict, context: LambdaContext) -> dict:
     # Convert Lambda event to WSGI environment
+    query_params = event.get('queryStringParameters', {}) or {}
+    query_string = urlencode(query_params) if query_params else ''
+
     environ = {
         'REQUEST_METHOD': event.get('httpMethod', 'GET'),
         'SCRIPT_NAME': '',
         'PATH_INFO': event.get('path', ''),
-        'QUERY_STRING': event.get('queryStringParameters', ''),
+        'QUERY_STRING': query_string,
         'SERVER_NAME': event.get('headers', {}).get('Host', ''),
         'SERVER_PORT': '443',
         'SERVER_PROTOCOL': 'HTTP/1.1',
