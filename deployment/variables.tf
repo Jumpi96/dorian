@@ -26,4 +26,9 @@ variable "openai_api_key" {
   description = "OpenAI API key"
   type        = string
   sensitive   = true
+}
+
+variable "lambda_package_key" {
+  description = "S3 key for the Lambda deployment package"
+  type        = string
 } 
