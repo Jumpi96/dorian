@@ -1,7 +1,7 @@
 from app import create_app
-from awsgi import response
+from serverless_wsgi import handle_request
 
 app = create_app()
 
 def handler(event, context):
-    return response(app, event, context) 
+    return handle_request(app, event, context) 
