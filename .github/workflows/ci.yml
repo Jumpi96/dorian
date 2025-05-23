@@ -140,12 +140,12 @@ jobs:
 
     - name: Build Project Artifacts
       working-directory: ./frontend
-      run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+      run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
     - name: Deploy to Vercel
       #if: github.ref == 'refs/heads/main'
       working-directory: ./frontend
-      run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} --prod
+      run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
       env:
         VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
         VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
