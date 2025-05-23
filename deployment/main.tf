@@ -23,9 +23,9 @@ module "lambda" {
 module "route53" {
   source = "./modules/route53"
 
-  api_domain_name         = module.lambda.api_domain_name
+  api_domain_name          = module.lambda.api_domain_name
   api_regional_domain_name = module.lambda.api_regional_domain_name
-  api_zone_id             = module.lambda.api_zone_id
+  api_zone_id              = module.lambda.api_zone_id
 }
 
 output "api_url" {
