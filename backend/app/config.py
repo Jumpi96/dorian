@@ -25,3 +25,6 @@ class Config:
     # OpenAI
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', 'test')
     MAX_REQUESTS_PER_DAY = int(os.getenv('MAX_REQUESTS_PER_DAY', 10))
+
+    COOKIE_DOMAIN = os.getenv('COOKIE_DOMAIN', 'localhost')
+
