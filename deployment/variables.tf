@@ -36,4 +36,9 @@ variable "frontend_redirect_success" {
 variable "lambda_package_key" {
   description = "S3 key for the Lambda deployment package"
   type        = string
-} 
+}
+
+variable "cookie_domain" {
+  description = "Cookie domain"
+  type        = string
+}

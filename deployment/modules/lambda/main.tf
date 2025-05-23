@@ -15,6 +15,7 @@ resource "aws_lambda_function" "app" {
       JWT_SECRET_KEY            = var.jwt_secret_key
       OPENAI_API_KEY            = var.openai_api_key
       FRONTEND_REDIRECT_SUCCESS = var.frontend_redirect_success
+      COOKIE_DOMAIN             = var.cookie_domain
     }
   }
 }

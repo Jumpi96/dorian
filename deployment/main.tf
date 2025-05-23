@@ -19,6 +19,7 @@ module "lambda" {
   openai_api_key            = var.openai_api_key
   lambda_package_key        = var.lambda_package_key
   frontend_redirect_success = var.frontend_redirect_success
+  cookie_domain             = var.cookie_domain
 }
 
 module "route53" {
