@@ -87,7 +87,38 @@ resource "aws_lambda_permission" "api_gw" {
   source_arn    = "${aws_apigatewayv2_api.lambda.execution_arn}/*/*"
 }
 
+resource "aws_apigatewayv2_domain_name" "api" {
+  domain_name = "api.dorian.jplorenzo.com"
+
+  domain_name_configuration {
+    certificate_arn = data.aws_acm_certificate.jplorenzo_cert.arn
+    endpoint_type   = "REGIONAL"
+    security_policy = "TLS_1_2"
+  }
+}
+
+data "aws_acm_certificate" "jplorenzo_cert" {
+  provider = aws.us_east_1
+  domain   = "*.jplorenzo.com"
+}
+
+resource "aws_apigatewayv2_api_mapping" "api" {
+  api_id      = aws_apigatewayv2_api.lambda.id
+  domain_name = aws_apigatewayv2_domain_name.api.id
+  stage       = aws_apigatewayv2_stage.lambda.id
+}
+
 output "api_endpoint" {
   description = "API Gateway endpoint URL"
   value       = "${aws_apigatewayv2_stage.lambda.invoke_url}/"
+}
+
+output "api_domain_name" {
+  description = "API Gateway custom domain name"
+  value       = aws_apigatewayv2_domain_name.api.domain_name
+}
+
+output "api_zone_id" {
+  description = "API Gateway hosted zone ID"
+  value       = aws_apigatewayv2_domain_name.api.domain_name_configuration[0].hosted_zone_id
 } 

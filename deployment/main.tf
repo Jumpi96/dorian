@@ -18,4 +18,15 @@ module "lambda" {
   jwt_secret_key       = var.jwt_secret_key
   openai_api_key       = var.openai_api_key
   lambda_package_key   = var.lambda_package_key
+
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
+}
+
+module "route53" {
+  source = "./modules/route53"
+
+  api_domain_name = module.lambda.api_domain_name
+  api_zone_id     = module.lambda.api_zone_id
 } 
