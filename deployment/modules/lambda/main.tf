@@ -88,7 +88,7 @@ resource "aws_lambda_permission" "api_gw" {
 }
 
 resource "aws_apigatewayv2_domain_name" "api" {
-  domain_name = "api.dorian.jplorenzo.com"
+  domain_name = "dorian-api.jplorenzo.com"
 
   domain_name_configuration {
     certificate_arn = data.aws_acm_certificate.jplorenzo_cert.arn
@@ -98,14 +98,18 @@ resource "aws_apigatewayv2_domain_name" "api" {
 }
 
 data "aws_acm_certificate" "jplorenzo_cert" {
-  provider = aws.us_east_1
-  domain   = "*.jplorenzo.com"
+  domain = "*.jplorenzo.com"
 }
 
 resource "aws_apigatewayv2_api_mapping" "api" {
   api_id      = aws_apigatewayv2_api.lambda.id
   domain_name = aws_apigatewayv2_domain_name.api.id
   stage       = aws_apigatewayv2_stage.lambda.id
+}
+
+output "api_id" {
+  description = "API Gateway ID"
+  value       = aws_apigatewayv2_api.lambda.id
 }
 
 output "api_endpoint" {
@@ -118,7 +122,21 @@ output "api_domain_name" {
   value       = aws_apigatewayv2_domain_name.api.domain_name
 }
 
+output "api_regional_domain_name" {
+  description = "API Gateway regional domain name"
+  value       = aws_apigatewayv2_domain_name.api.domain_name_configuration[0].target_domain_name
+}
+
 output "api_zone_id" {
   description = "API Gateway hosted zone ID"
   value       = aws_apigatewayv2_domain_name.api.domain_name_configuration[0].hosted_zone_id
+}
+
+output "debug_domain_config" {
+  description = "Debug output for domain configuration"
+  value = {
+    domain_name = aws_apigatewayv2_domain_name.api.domain_name
+    target_domain = aws_apigatewayv2_domain_name.api.domain_name_configuration[0].target_domain_name
+    hosted_zone_id = aws_apigatewayv2_domain_name.api.domain_name_configuration[0].hosted_zone_id
+  }
 } 
