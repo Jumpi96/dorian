@@ -28,6 +28,11 @@ variable "openai_api_key" {
   sensitive   = true
 }
 
+variable "frontend_redirect_success" {
+  description = "Frontend redirect success URL"
+  type        = string
+}
+
 variable "lambda_package_key" {
   description = "S3 key for the Lambda deployment package"
   type        = string

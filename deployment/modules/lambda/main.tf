@@ -10,10 +10,11 @@ resource "aws_lambda_function" "app" {
 
   environment {
     variables = {
-      GOOGLE_CLIENT_ID     = var.google_client_id
-      GOOGLE_CLIENT_SECRET = var.google_client_secret
-      JWT_SECRET_KEY       = var.jwt_secret_key
-      OPENAI_API_KEY       = var.openai_api_key
+      GOOGLE_CLIENT_ID          = var.google_client_id
+      GOOGLE_CLIENT_SECRET      = var.google_client_secret
+      JWT_SECRET_KEY            = var.jwt_secret_key
+      OPENAI_API_KEY            = var.openai_api_key
+      FRONTEND_REDIRECT_SUCCESS = var.frontend_redirect_success
     }
   }
 }
