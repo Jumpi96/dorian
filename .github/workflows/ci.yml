@@ -83,7 +83,7 @@ jobs:
         aws s3 cp lambda_deployment.zip s3://dorian-terraform-state/${PACKAGE_KEY}
         echo "lambda_package_key=${PACKAGE_KEY}" >> $GITHUB_OUTPUT
 
-  terraform:
+  deployment:
     needs: [frontend, backend]
     runs-on: ubuntu-latest
     defaults:
@@ -120,3 +120,27 @@ jobs:
     - name: Terraform Apply
       #if: github.ref == 'refs/heads/main'
       run: terraform apply -var="environment=dev" -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" -var="jwt_secret_key=${{ secrets.JWT_SECRET_KEY }}" -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}" -var="lambda_package_key=${{ needs.backend.outputs.lambda_package_key }}" -auto-approve
+
+    - name: Setup Node.js for Vercel
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+
+    - name: Install Vercel CLI
+      run: npm install -g vercel@latest
+
+    - name: Pull Vercel Environment Information
+      working-directory: ./frontend
+      run: vercel pull --yes --environment=dev --token=${{ secrets.VERCEL_TOKEN }}
+
+    - name: Build Project Artifacts
+      working-directory: ./frontend
+      run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+    - name: Deploy to Vercel
+      #if: github.ref == 'refs/heads/main'
+      working-directory: ./frontend
+      run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} --prod
+      env:
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
