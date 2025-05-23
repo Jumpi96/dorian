@@ -2,9 +2,6 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  console.log('Auth check - Environment:', process.env.NODE_ENV);
-  console.log('Auth check - API URL:', process.env.NEXT_PUBLIC_API_URL);
-  
   const token = request.cookies.get('auth_token');
   
   console.log('Auth check - Token exists:', !!token);
@@ -19,10 +16,8 @@ export async function GET(request: NextRequest) {
 
   try {
     // Verify the token with the backend
-    const verifyUrl = `${process.env.NEXT_PUBLIC_API_URL}/auth/verify`;
-    console.log('Auth check - Attempting to verify token with backend at:', verifyUrl);
-    
-    const response = await fetch(verifyUrl, {
+    console.log('Auth check - Attempting to verify token with backend');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/verify`, {
       headers: {
         'Authorization': `Bearer ${token.value}`
       }

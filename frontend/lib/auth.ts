@@ -16,16 +16,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check if the auth_token cookie exists
     const checkAuth = async () => {
-      console.log('Auth check - Starting client-side auth check');
       try {
-        console.log('Auth check - Making request to /api/auth/check');
         const response = await fetch('/api/auth/check', {
           credentials: 'include', // Important: This ensures cookies are sent
         });
-        console.log('Auth check - Response status:', response.status);
         setIsAuthenticated(response.ok);
       } catch (error) {
-        console.error('Auth check - Error during auth check:', error);
         setIsAuthenticated(false);
       }
     };
