@@ -30,14 +30,22 @@ def init_auth_routes(app, google):
         jwt_token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
         
         response = redirect(Config.FRONTEND_REDIRECT_SUCCESS)
-        response.set_cookie(
-            'auth_token',
-            jwt_token,
-            httponly=True,
-            secure=True,
-            samesite='Lax',
-            max_age=JWT_EXP_DELTA_SECONDS
-        )
+        
+        # Get cookie domain from config, default to None for local development
+        cookie_domain = Config.COOKIE_DOMAIN if hasattr(Config, 'COOKIE_DOMAIN') else None
+        
+        cookie_settings = {
+            'httponly': True,
+            'secure': True,
+            'samesite': 'Lax',
+            'max_age': JWT_EXP_DELTA_SECONDS
+        }
+        
+        # Only add domain if it's configured (production)
+        if cookie_domain:
+            cookie_settings['domain'] = cookie_domain
+            
+        response.set_cookie('auth_token', jwt_token, **cookie_settings)
         return response
 
     @app.route('/auth/verify')
