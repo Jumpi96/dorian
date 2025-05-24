@@ -34,23 +34,29 @@ def init_auth_routes(app, google):
             jwt_token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
             print(f"[Auth Callback] JWT token generated: {jwt_token[:10]}...")
             
-            response = redirect(Config.FRONTEND_REDIRECT_SUCCESS)
-            print(f"[Auth Callback] Redirect URL: {Config.FRONTEND_REDIRECT_SUCCESS}")
-            print(f"[Auth Callback] Cookie domain: {Config.COOKIE_DOMAIN}")
+            location = Config.FRONTEND_REDIRECT_SUCCESS
+            print(f"[Auth Callback] Redirect URL: {location}")
             
-            cookie_settings = {
-                'httponly': True,
-                'secure': True,
-                'samesite': 'None',
-                'max_age': JWT_EXP_DELTA_SECONDS,
-                'path': '/',  # Ensure cookie is available on all paths
-                'domain': Config.COOKIE_DOMAIN
+            # Build cookie string manually
+            cookie_str = (
+                f"auth_token={jwt_token}; "
+                f"Domain={Config.COOKIE_DOMAIN}; "
+                "Path=/; "
+                "Secure; "
+                "HttpOnly; "
+                "SameSite=None; "
+                f"Max-Age={JWT_EXP_DELTA_SECONDS}"
+            )
+            print(f"[Auth Callback] Cookie string: {cookie_str}")
+
+            # Return explicit API Gateway v1.0 format
+            return {
+                "statusCode": 302,
+                "headers": {"Location": location},
+                "multiValueHeaders": {
+                    "Set-Cookie": [cookie_str]
+                }
             }
-            
-            print(f"[Auth Callback] Cookie settings: {cookie_settings}")
-            response.set_cookie('auth_token', jwt_token, **cookie_settings)
-            print("[Auth Callback] Cookie set successfully")
-            return response
         except Exception as e:
             print(f"[Auth Callback] Error: {str(e)}")
             raise
