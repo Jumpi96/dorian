@@ -47,6 +47,8 @@ def init_auth_routes(app, google):
     @app.route('/auth/callback')
     def auth_callback():
         print("[Auth Callback] Starting callback process")
+        print(f"[Auth Callback] Request headers: {list(request.headers)}")
+        print(f"[Auth Callback] Session at start of callback: {dict(session.items())}")
         try:
             # Get the token with state validation
             token = google.authorize_access_token()
