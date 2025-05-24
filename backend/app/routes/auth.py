@@ -1,5 +1,5 @@
 import jwt
-from flask import request, url_for, redirect, jsonify
+from flask import request, url_for, redirect, jsonify, session
 from functools import wraps
 from datetime import datetime, timedelta, timezone
 from app.config import Config
@@ -13,7 +13,8 @@ def init_auth_routes(app, google):
     def login():
         redirect_uri = url_for('auth_callback', _external=True)
         print(f"[Auth Login] Redirect URI: {redirect_uri}")
-        # Ensure we're using the correct state parameter
+        # Store the redirect URI in session
+        session['redirect_uri'] = redirect_uri
         return google.authorize_redirect(
             redirect_uri,
             access_type='offline',

@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from authlib.integrations.flask_client import OAuth
 from app.config import Config
 from app.clients.dynamodb import DynamoDBClient
@@ -14,7 +15,7 @@ from app.routes.recommendations import init_recommendation_routes
 from app.routes.trips import init_trip_routes
 from app.routes.interactions import init_interaction_routes
 from app.services.text_transformations import TextTransformationsService
-
+import os
 
 oauth = OAuth()
 
@@ -31,7 +32,20 @@ def register_google_oauth(app):
 
 def create_app(dynamoDBClient=DynamoDBClient(), google=None):
     app = Flask(__name__)
+    
+    # Configure session
     app.secret_key = Config.JWT_SECRET_KEY
+    app.config['SESSION_COOKIE_SECURE'] = True
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None' if Config.COOKIE_DOMAIN and Config.COOKIE_DOMAIN != 'localhost' else 'Lax'
+    app.config['SESSION_COOKIE_DOMAIN'] = Config.COOKIE_DOMAIN if Config.COOKIE_DOMAIN and Config.COOKIE_DOMAIN != 'localhost' else None
+    
+    # Configure CORS
+    CORS(app, supports_credentials=True, origins=[
+        'http://localhost:3000',
+        'https://dorian.jplorenzo.com'
+    ])
+    
     if google is None:
         google = register_google_oauth(app)
 
