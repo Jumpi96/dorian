@@ -118,7 +118,7 @@ jobs:
       run: terraform plan -var="environment=dev" -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" -var="jwt_secret_key=${{ secrets.JWT_SECRET_KEY }}" -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}" -var="frontend_redirect_success=${{ secrets.FRONTEND_REDIRECT_SUCCESS }}" -var="lambda_package_key=${{ needs.backend.outputs.lambda_package_key }}" -var="cookie_domain=.jplorenzo.com"
 
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/main'
+      #if: github.ref == 'refs/heads/main'
       run: terraform apply -var="environment=dev" -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" -var="jwt_secret_key=${{ secrets.JWT_SECRET_KEY }}" -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}" -var="frontend_redirect_success=${{ secrets.FRONTEND_REDIRECT_SUCCESS }}" -var="lambda_package_key=${{ needs.backend.outputs.lambda_package_key }}" -var="cookie_domain=.jplorenzo.com" -auto-approve
 
     - name: Get API URL
@@ -151,7 +151,7 @@ jobs:
         NEXT_PUBLIC_API_URL: ${{ steps.api_url.outputs.api_url }}
 
     - name: Deploy to Vercel
-      #if: github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/main'
       working-directory: ./frontend
       run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
       env:
