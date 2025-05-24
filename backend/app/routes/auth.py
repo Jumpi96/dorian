@@ -38,25 +38,18 @@ def init_auth_routes(app, google):
             print(f"[Auth Callback] Redirect URL: {Config.FRONTEND_REDIRECT_SUCCESS}")
             print(f"[Auth Callback] Cookie domain: {Config.COOKIE_DOMAIN}")
             
-            # Try setting the cookie both ways
-            base_cookie_settings = {
+            cookie_settings = {
                 'httponly': True,
                 'secure': True,
                 'samesite': 'None',
-                'max_age': JWT_EXP_DELTA_SECONDS
+                'max_age': JWT_EXP_DELTA_SECONDS,
+                'path': '/',  # Ensure cookie is available on all paths
+                'domain': Config.COOKIE_DOMAIN
             }
             
-            # First, set without domain
-            print("[Auth Callback] Setting cookie without domain")
-            response.set_cookie('auth_token', jwt_token, **base_cookie_settings)
-            
-            # Then, set with domain if we have one
-            if Config.COOKIE_DOMAIN and Config.COOKIE_DOMAIN != 'localhost':
-                print(f"[Auth Callback] Setting cookie with domain: {Config.COOKIE_DOMAIN}")
-                domain_cookie_settings = {**base_cookie_settings, 'domain': Config.COOKIE_DOMAIN}
-                response.set_cookie('auth_token_domain', jwt_token, **domain_cookie_settings)
-            
-            print("[Auth Callback] Cookies set successfully")
+            print(f"[Auth Callback] Cookie settings: {cookie_settings}")
+            response.set_cookie('auth_token', jwt_token, **cookie_settings)
+            print("[Auth Callback] Cookie set successfully")
             return response
         except Exception as e:
             print(f"[Auth Callback] Error: {str(e)}")
