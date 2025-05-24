@@ -37,8 +37,19 @@ def create_app(dynamoDBClient=DynamoDBClient(), google=None):
     app.secret_key = Config.JWT_SECRET_KEY
     app.config['SESSION_COOKIE_SECURE'] = True
     app.config['SESSION_COOKIE_HTTPONLY'] = True
-    app.config['SESSION_COOKIE_SAMESITE'] = 'None' if Config.COOKIE_DOMAIN and Config.COOKIE_DOMAIN != 'localhost' else 'Lax'
-    app.config['SESSION_COOKIE_DOMAIN'] = Config.COOKIE_DOMAIN if Config.COOKIE_DOMAIN and Config.COOKIE_DOMAIN != 'localhost' else None
+    
+    # Determine if we are in a production-like environment based on COOKIE_DOMAIN
+    is_production_env = Config.COOKIE_DOMAIN and Config.COOKIE_DOMAIN != 'localhost'
+
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None' if is_production_env else 'Lax'
+    
+    if is_production_env:
+        # For production, explicitly set the session cookie domain to the API subdomain
+        app.config['SESSION_COOKIE_DOMAIN'] = 'dorian-api.jplorenzo.com' 
+        print(f"[App Init] Production environment detected. SESSION_COOKIE_DOMAIN set to: {app.config['SESSION_COOKIE_DOMAIN']}")
+    else:
+        app.config['SESSION_COOKIE_DOMAIN'] = None # Flask will use current domain for localhost
+        print("[App Init] Localhost environment detected. SESSION_COOKIE_DOMAIN set to None.")
     
     # Configure CORS
     CORS(app, supports_credentials=True, origins=[
