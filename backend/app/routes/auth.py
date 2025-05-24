@@ -36,9 +36,7 @@ def init_auth_routes(app, google):
         if Config.COOKIE_DOMAIN and Config.COOKIE_DOMAIN != 'localhost':
             print("[Auth Login] Adapting Flask response for API Gateway (production)")
             location = flask_response.headers.get('Location')
-            
-            # Extract Set-Cookie headers from the Flask response.
-            # Authlib uses the Flask session, which sets a session cookie.
+            content_type = flask_response.headers.get('Content-Type')
             cookies_to_set = flask_response.headers.getlist("Set-Cookie")
             
             if not cookies_to_set:
@@ -46,13 +44,13 @@ def init_auth_routes(app, google):
             else:
                 print(f"[Auth Login] Extracted Set-Cookie headers: {cookies_to_set}")
 
+            response_headers = {"Location": location}
+            if content_type:
+                response_headers["Content-Type"] = content_type
+
             return {
                 "statusCode": flask_response.status_code, # Should be 302
-                "headers": {
-                    "Location": location
-                    # Other headers from flask_response.headers could be added if necessary,
-                    # but Location is primary for a redirect.
-                },
+                "headers": response_headers,
                 "cookies": cookies_to_set, # Pass them in the cookies array
                 "body": flask_response.get_data(as_text=True) # Redirects usually have empty body
             }
