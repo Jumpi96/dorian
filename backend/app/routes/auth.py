@@ -58,7 +58,8 @@ def init_auth_routes(app, google):
                     "headers": {"Location": location},
                     "multiValueHeaders": {
                         "Set-Cookie": [cookie_str]
-                    }
+                    },
+                    "body": ""  # Required by API Gateway
                 }
             else:
                 print("[Auth Callback] Using Flask response for localhost")
