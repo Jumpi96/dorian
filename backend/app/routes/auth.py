@@ -37,26 +37,44 @@ def init_auth_routes(app, google):
             location = Config.FRONTEND_REDIRECT_SUCCESS
             print(f"[Auth Callback] Redirect URL: {location}")
             
-            # Build cookie string manually
-            cookie_str = (
-                f"auth_token={jwt_token}; "
-                f"Domain={Config.COOKIE_DOMAIN}; "
-                "Path=/; "
-                "Secure; "
-                "HttpOnly; "
-                "SameSite=None; "
-                f"Max-Age={JWT_EXP_DELTA_SECONDS}"
-            )
-            print(f"[Auth Callback] Cookie string: {cookie_str}")
+            # Check if we're in production (not localhost)
+            if Config.COOKIE_DOMAIN and Config.COOKIE_DOMAIN != 'localhost':
+                print("[Auth Callback] Using API Gateway format for production")
+                # Build cookie string manually for production
+                cookie_str = (
+                    f"auth_token={jwt_token}; "
+                    f"Domain={Config.COOKIE_DOMAIN}; "
+                    "Path=/; "
+                    "Secure; "
+                    "HttpOnly; "
+                    "SameSite=None; "
+                    f"Max-Age={JWT_EXP_DELTA_SECONDS}"
+                )
+                print(f"[Auth Callback] Cookie string: {cookie_str}")
 
-            # Return explicit API Gateway v1.0 format
-            return {
-                "statusCode": 302,
-                "headers": {"Location": location},
-                "multiValueHeaders": {
-                    "Set-Cookie": [cookie_str]
+                # Return explicit API Gateway v1.0 format
+                return {
+                    "statusCode": 302,
+                    "headers": {"Location": location},
+                    "multiValueHeaders": {
+                        "Set-Cookie": [cookie_str]
+                    }
                 }
-            }
+            else:
+                print("[Auth Callback] Using Flask response for localhost")
+                # Use Flask response for localhost
+                response = redirect(location)
+                cookie_settings = {
+                    'httponly': True,
+                    'secure': True,
+                    'samesite': 'Lax',  # Can be Lax for localhost
+                    'max_age': JWT_EXP_DELTA_SECONDS,
+                    'path': '/'
+                }
+                print(f"[Auth Callback] Cookie settings: {cookie_settings}")
+                response.set_cookie('auth_token', jwt_token, **cookie_settings)
+                return response
+
         except Exception as e:
             print(f"[Auth Callback] Error: {str(e)}")
             raise
