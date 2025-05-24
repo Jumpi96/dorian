@@ -24,7 +24,7 @@ def init_auth_routes(app, google):
         )
 
         # Explicitly save the session to ensure Set-Cookie is added to flask_response
-        app.save_session(session, flask_response)
+        app.session_interface.save_session(app, session, flask_response)
 
         print(f"[Auth Login] Session after authorize_redirect: {dict(session.items())}")
         print(f"[Auth Login] Flask response type: {type(flask_response)}")
