@@ -13,6 +13,7 @@ def init_auth_routes(app, google):
     def login():
         redirect_uri = url_for('auth_callback', _external=True)
         print(f"[Auth Login] Redirect URI: {redirect_uri}")
+        print(f"[Auth Login] Session before authorize_redirect: {dict(session.items())}")
         
         # This is a Flask/Werkzeug Response object
         flask_response = google.authorize_redirect(
@@ -21,6 +22,12 @@ def init_auth_routes(app, google):
             prompt='consent',
             include_granted_scopes='true'
         )
+
+        print(f"[Auth Login] Session after authorize_redirect: {dict(session.items())}")
+        print(f"[Auth Login] Flask response type: {type(flask_response)}")
+        print(f"[Auth Login] Flask response status code: {flask_response.status_code}")
+        print(f"[Auth Login] Flask response headers: {list(flask_response.headers)}")
+        print(f"[Auth Login] Flask response data: {flask_response.get_data(as_text=True)[:200]}...") # Log first 200 chars
 
         # If in production environment (using API Gateway), adapt this response
         if Config.COOKIE_DOMAIN and Config.COOKIE_DOMAIN != 'localhost':
