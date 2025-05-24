@@ -40,8 +40,8 @@ def init_auth_routes(app, google):
             # Check if we're in production (not localhost)
             if Config.COOKIE_DOMAIN and Config.COOKIE_DOMAIN != 'localhost':
                 print("[Auth Callback] Using API Gateway format for production")
-                # Build cookie string manually for production
-                cookie_str = (
+                # Build cookie string for production
+                cookie = (
                     f"auth_token={jwt_token}; "
                     f"Domain={Config.COOKIE_DOMAIN}; "
                     "Path=/; "
@@ -50,19 +50,16 @@ def init_auth_routes(app, google):
                     "SameSite=None; "
                     f"Max-Age={JWT_EXP_DELTA_SECONDS}"
                 )
-                print(f"[Auth Callback] Cookie string: {cookie_str}")
+                print(f"[Auth Callback] Cookie string: {cookie}")
 
-                # Return Lambda payload format 1.0 with HTTP API Gateway (v2) structure
+                # Return Lambda payload format 2.0 with HTTP API Gateway structure
                 return {
                     "statusCode": 302,
                     "headers": {
                         "Location": location
                     },
-                    "multiValueHeaders": {
-                        "Set-Cookie": [cookie_str]
-                    },
-                    "body": "",
-                    "isBase64Encoded": False
+                    "cookies": [cookie],
+                    "body": ""
                 }
             else:
                 print("[Auth Callback] Using Flask response for localhost")

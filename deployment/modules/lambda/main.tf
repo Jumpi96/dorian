@@ -73,6 +73,7 @@ resource "aws_apigatewayv2_integration" "lambda" {
   description        = "Lambda integration"
   integration_method = "POST"
   integration_uri    = aws_lambda_function.app.invoke_arn
+  payload_format_version = "2.0"
 }
 
 resource "aws_apigatewayv2_route" "lambda" {
