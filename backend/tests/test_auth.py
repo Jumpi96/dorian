@@ -26,6 +26,7 @@ def client():
     app.config['JSONIFY_MIMETYPE'] = 'application/json'
     Config.FRONTEND_REDIRECT_SUCCESS = 'http://localhost:3000/auth/success'
     Config.JWT_SECRET_KEY = 'mock-jwt-secret'
+    app.save_session = MagicMock() # Mock the save_session method
 
     with app.test_client() as test_client:
         yield test_client, mock_google
