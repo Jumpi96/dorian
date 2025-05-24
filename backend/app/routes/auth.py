@@ -52,14 +52,17 @@ def init_auth_routes(app, google):
                 )
                 print(f"[Auth Callback] Cookie string: {cookie_str}")
 
-                # Return explicit API Gateway v1.0 format
+                # Return Lambda payload format 1.0 with HTTP API Gateway (v2) structure
                 return {
                     "statusCode": 302,
-                    "headers": {"Location": location},
+                    "headers": {
+                        "Location": location
+                    },
                     "multiValueHeaders": {
                         "Set-Cookie": [cookie_str]
                     },
-                    "body": ""  # Required by API Gateway
+                    "body": "",
+                    "isBase64Encoded": False
                 }
             else:
                 print("[Auth Callback] Using Flask response for localhost")
