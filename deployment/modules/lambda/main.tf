@@ -52,9 +52,11 @@ resource "aws_apigatewayv2_api" "lambda" {
   name          = "dorian-api"
   protocol_type = "HTTP"
   cors_configuration {
-    allow_origins = ["*"]
+    allow_origins = ["http://localhost:3000", "https://dorian.jplorenzo.com"]
     allow_methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
-    allow_headers = ["Content-Type", "Authorization"]
+    allow_headers = ["Content-Type", "Authorization", "Cookie"]
+    expose_headers = ["Set-Cookie"]
+    allow_credentials = true
     max_age      = 300
   }
 }
