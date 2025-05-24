@@ -34,26 +34,11 @@ def init_auth_routes(app, google):
 
         # If in production environment (using API Gateway), adapt this response
         if Config.COOKIE_DOMAIN and Config.COOKIE_DOMAIN != 'localhost':
-            print("[Auth Login] Adapting Flask response for API Gateway (production)")
-            location = flask_response.headers.get('Location')
-            content_type = flask_response.headers.get('Content-Type')
-            cookies_to_set = flask_response.headers.getlist("Set-Cookie")
-            
-            if not cookies_to_set:
-                print("[Auth Login] WARNING: No Set-Cookie header found in Flask response from authorize_redirect!")
-            else:
-                print(f"[Auth Login] Extracted Set-Cookie headers: {cookies_to_set}")
-
-            response_headers = {"Location": location}
-            if content_type:
-                response_headers["Content-Type"] = content_type
-
-            return {
-                "statusCode": flask_response.status_code, # Should be 302
-                "headers": response_headers,
-                "cookies": cookies_to_set, # Pass them in the cookies array
-                "body": flask_response.get_data(as_text=True) # Redirects usually have empty body
-            }
+            print("[Auth Login] In production mode, returning Flask response directly for Mangum to handle.")
+            # The flask_response already has status 302, Location header,
+            # and Set-Cookie for session thanks to save_session.
+            # Mangum will convert this to the API Gateway 2.0 format.
+            return flask_response
         else:
             # For localhost or non-production, return the Flask response directly
             print("[Auth Login] Returning Flask response directly (localhost/dev)")
@@ -86,28 +71,19 @@ def init_auth_routes(app, google):
             
             # Check if we're in production (not localhost)
             if Config.COOKIE_DOMAIN and Config.COOKIE_DOMAIN != 'localhost':
-                print("[Auth Callback] Using API Gateway format for production")
-                # Build cookie string for production
-                cookie = (
-                    f"auth_token={jwt_token}; "
-                    f"Domain={Config.COOKIE_DOMAIN}; "
-                    "Path=/; "
-                    "Secure; "
-                    "HttpOnly; "
-                    "SameSite=None; "
-                    f"Max-Age={JWT_EXP_DELTA_SECONDS}"
-                )
-                print(f"[Auth Callback] Cookie string: {cookie}")
-
-                # Return Lambda payload format 2.0 with HTTP API Gateway structure
-                return {
-                    "statusCode": 302,
-                    "headers": {
-                        "Location": location
-                    },
-                    "cookies": [cookie],
-                    "body": ""
+                print("[Auth Callback] Using Flask response for production, Mangum will adapt")
+                response = redirect(location) # Create a Flask redirect response
+                cookie_settings = {
+                    'httponly': True,
+                    'secure': True,
+                    'samesite': 'None', # Must be None for cross-domain cookies
+                    'max_age': JWT_EXP_DELTA_SECONDS,
+                    'path': '/',
+                    'domain': Config.COOKIE_DOMAIN
                 }
+                print(f"[Auth Callback] Production cookie settings: {cookie_settings}")
+                response.set_cookie('auth_token', jwt_token, **cookie_settings)
+                return response # Return Flask response for Mangum
             else:
                 print("[Auth Callback] Using Flask response for localhost")
                 # Use Flask response for localhost
