@@ -13,14 +13,43 @@ def init_auth_routes(app, google):
     def login():
         redirect_uri = url_for('auth_callback', _external=True)
         print(f"[Auth Login] Redirect URI: {redirect_uri}")
-        # Store the redirect URI in session
-        session['redirect_uri'] = redirect_uri
-        return google.authorize_redirect(
+        
+        # This is a Flask/Werkzeug Response object
+        flask_response = google.authorize_redirect(
             redirect_uri,
             access_type='offline',
             prompt='consent',
             include_granted_scopes='true'
         )
+
+        # If in production environment (using API Gateway), adapt this response
+        if Config.COOKIE_DOMAIN and Config.COOKIE_DOMAIN != 'localhost':
+            print("[Auth Login] Adapting Flask response for API Gateway (production)")
+            location = flask_response.headers.get('Location')
+            
+            # Extract Set-Cookie headers from the Flask response.
+            # Authlib uses the Flask session, which sets a session cookie.
+            cookies_to_set = flask_response.headers.getlist("Set-Cookie")
+            
+            if not cookies_to_set:
+                print("[Auth Login] WARNING: No Set-Cookie header found in Flask response from authorize_redirect!")
+            else:
+                print(f"[Auth Login] Extracted Set-Cookie headers: {cookies_to_set}")
+
+            return {
+                "statusCode": flask_response.status_code, # Should be 302
+                "headers": {
+                    "Location": location
+                    # Other headers from flask_response.headers could be added if necessary,
+                    # but Location is primary for a redirect.
+                },
+                "cookies": cookies_to_set, # Pass them in the cookies array
+                "body": flask_response.get_data(as_text=True) # Redirects usually have empty body
+            }
+        else:
+            # For localhost or non-production, return the Flask response directly
+            print("[Auth Login] Returning Flask response directly (localhost/dev)")
+            return flask_response
 
     @app.route('/auth/callback')
     def auth_callback():
