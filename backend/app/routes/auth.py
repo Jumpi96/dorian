@@ -13,13 +13,22 @@ def init_auth_routes(app, google):
     def login():
         redirect_uri = url_for('auth_callback', _external=True)
         print(f"[Auth Login] Redirect URI: {redirect_uri}")
-        return google.authorize_redirect(redirect_uri)
+        # Ensure we're using the correct state parameter
+        return google.authorize_redirect(
+            redirect_uri,
+            access_type='offline',
+            prompt='consent',
+            include_granted_scopes='true'
+        )
 
     @app.route('/auth/callback')
     def auth_callback():
         print("[Auth Callback] Starting callback process")
         try:
-            google.authorize_access_token()
+            # Get the token with state validation
+            token = google.authorize_access_token()
+            print(f"[Auth Callback] Token received: {token.get('access_token')[:10]}...")
+            
             resp = google.get('userinfo')
             user_info = resp.json()
             print(f"[Auth Callback] User info received: {user_info.get('email')}")
